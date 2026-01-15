@@ -4,41 +4,24 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import sys
 
-# 多规则源
-RULE_SOURCES = {
-    "EasyList": "https://easylist.to/easylist/easylist.txt",
-    "EasyPrivacy": "https://easylist.to/easylist/easyprivacy.txt",
-    "Fanboy Annoyance": "https://easylist-downloads.adblockplus.org/fanboy-annoyance.txt",
-    "Fanboy Social": "https://easylist-downloads.adblockplus.org/fanboy-social.txt",
-    "AdGuard Base": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
-}
+EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
 
-CATEGORY_MAP = {
-    "General": "通用广告",
-    "Tracking": "追踪器",
-    "Social": "社交按钮",
-}
-
-def detect_category(line: str, current: str) -> str:
-    m = re.match(r"^![-\s]*([A-Za-z]+)[-\s]*$", line)
-    if m:
-        key = m.group(1)
-        return CATEGORY_MAP.get(key, current)
-    return current
-
-def extract_domain(rule: str) -> str | None:
-    rule = rule.strip()
-
-    if not rule or rule.startswith(("!", "@@", "##", "#@#")):
+def extract_domain(line: str) -> str | None:
+    line = line.strip()
+    if not line or line.startswith(("!", "#", "@@", "##", "[", ";")):
         return None
 
-    m = re.match(r"^\|\|([^\/\^]+)\^", rule)
+    m = re.match(r"^\|\|([^\/\^]+)\^", line)
     if m:
         return f"DOMAIN-SUFFIX,{m.group(1)}"
 
-    m = re.match(r"^\|https?:\/\/([^\/]+)\/", rule)
+    m = re.match(r"^\|https?:\/\/([^\/]+)\/", line)
     if m:
         return f"DOMAIN,{m.group(1)}"
+
+    m = re.match(r"^([^\/\^]+)$", line)
+    if m and "." in m.group(1):
+        return f"DOMAIN-SUFFIX,{m.group(1)}"
 
     return None
 
@@ -54,6 +37,7 @@ def parse_header(text: str):
 
     if last_modified_raw:
         try:
+            from datetime import datetime, timedelta
             dt_utc = datetime.strptime(last_modified_raw, "%d %b %Y %H:%M UTC")
             dt_beijing = dt_utc + timedelta(hours=8)
             last_modified = dt_beijing.strftime("%Y年%m月%d日 %H:%M")
@@ -65,65 +49,62 @@ def parse_header(text: str):
     return version, last_modified
 
 def convert(outfile: str):
-    categorized = {
-        "通用广告": set(),
-        "追踪器": set(),
-        "社交按钮": set(),
-    }
+    outfile_path = Path(outfile)
 
-    source_info = {}
+    # 旧规则集合，用于 diff
+    old_rules = set()
+    if outfile_path.exists():
+        for line in outfile_path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("DOMAIN"):
+                old_rules.add(line.strip())
 
-    for name, url in RULE_SOURCES.items():
-        print(f"Downloading {name}...")
-        text = requests.get(url, timeout=30).text
+    print("Downloading EasyList...")
+    text = requests.get(EASYLIST_URL, timeout=30).text
 
-        version, last_modified = parse_header(text)
-        source_info[name] = {
-            "url": url,
-            "version": version,
-            "last_modified": last_modified,
-        }
+    version, last_modified = parse_header(text)
 
-        current_category = "通用广告"
+    new_rules = set()
+    for line in text.splitlines():
+        d = extract_domain(line)
+        if d:
+            new_rules.add(d)
 
-        for line in text.splitlines():
-            current_category = detect_category(line, current_category)
-            r = extract_domain(line)
-            if r:
-                categorized[current_category].add(r)
+    added = new_rules - old_rules
+    removed = old_rules - new_rules
 
-    total_rules = sum(len(v) for v in categorized.values())
+    added_count = len(added)
+    removed_count = len(removed)
+    total = len(new_rules)
 
     now = datetime.utcnow() + timedelta(hours=8)
     update_time = now.strftime("%Y年%m月%d日 %H:%M")
 
     out_lines = [
-        "# 内容：广告拦截规则（多源合并版）",
-        f"# 总数量：{total_rules} 条",
+        "# 内容：广告拦截规则 EasyList",
+        f"# 总数量：{total} 条",
+        f"# 新增：{added_count} 条",
+        f"# 删除：{removed_count} 条",
         f"# 更新时间（北京时间）：{update_time}",
+        f"# 原规则来源：{EASYLIST_URL}",
+        f"# 原规则版本：{version}",
+        f"# 原规则更新时间（北京时间）：{last_modified}",
         "",
-        "# 规则来源：",
+        "# ===== 广告规则 =====",
     ]
+    out_lines.extend(sorted(new_rules))
 
-    for name, info in source_info.items():
-        out_lines.append(f"# - {name}")
-        out_lines.append(f"#   URL：{info['url']}")
-        out_lines.append(f"#   版本：{info['version']}")
-        out_lines.append(f"#   更新时间：{info['last_modified']}")
-        out_lines.append("#")
-
-    for cat, rules in categorized.items():
-        out_lines.append(f"# ===== {cat} =====")
-        out_lines.extend(sorted(rules))
-        out_lines.append("")
-
-    outfile_path = Path(outfile)
     outfile_path.parent.mkdir(parents=True, exist_ok=True)
     outfile_path.write_text("\n".join(out_lines), encoding="utf-8")
 
-    print(f"Generated {outfile} with {total_rules} rules.")
+    print(f"Generated {outfile} with {total} rules.")
 
-    Path("commit_message.txt").write_text("Easylist广告拦截规则（多源合并）", encoding="utf-8")
+    # 写 diff 详细列表
+    Path("easylist_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
+    Path("easylist_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
+
+    # 提交信息
+    commit_msg = f"EasyList广告规则（新增 {added_count}，删除 {removed_count}）"
+    Path("commit_message_easylist.txt").write_text(commit_msg, encoding="utf-8")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
