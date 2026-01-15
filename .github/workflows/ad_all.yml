@@ -5,9 +5,8 @@ permissions:
 
 on:
   schedule:
-    - cron: "0 22 * * *"
+    - cron: "0 22 * * *"   # 中国时间 06:00
   workflow_dispatch:
-
 
 jobs:
   build:
@@ -33,9 +32,7 @@ jobs:
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions"
 
-          # 只提交 5 个 .list 文件和 version.txt
-          git add AdGuard.list Advertising.list AppPurify.list EasyList.list BanEasyPrivacy.list version.txt
+          git add Clash/Ruleset/AD/*.list .github/tmp/version.txt
 
-          # 统一提交，但每个文件内部头部注释已区分“最后提交信息”
           git commit -m "自动更新规则文件（AdGuard / Advertising / AppPurify / EasyList / BanEasyPrivacy）" || exit 0
           git push || exit 0
