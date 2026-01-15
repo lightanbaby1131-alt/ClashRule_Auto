@@ -1,20 +1,20 @@
 # File: AppPurify.list
 # Description: App 级广告屏蔽规则（基于 AdAway，去重后专属域名集合）。
-# Version: 1.0.2
-# Updated: 2026-01-15 12:06 UTC
-# Format: 一行一个域名，OpenClash 可识别。
+# Version: 1.0.3
+# Updated: 2026-01-15 12:11 UTC
+# Format: DOMAIN-SUFFIX,example.com
 
-amplitude.com
-api.engager.ecbsn.com
-apituner.ecbsn.com
-assets.emarsys.net
-fc.yahoo.com
-ffconf.ecbsn.com
-me-client.eservice.emarsys.net
-mobile-sdk-config.gservice.emarsys.net
-production-cmp.isgprivacy.cbsi.com
-r.mradx.net
-sdk.qikify.com
-sdk.split.io
-sitegenesis.production.deckers.coremedia.cloud
-www.tapresearch.com
+DOMAIN-SUFFIX,amplitude.com
+DOMAIN-SUFFIX,api.engager.ecbsn.com
+DOMAIN-SUFFIX,apituner.ecbsn.com
+DOMAIN-SUFFIX,assets.emarsys.net
+DOMAIN-SUFFIX,fc.yahoo.com
+DOMAIN-SUFFIX,ffconf.ecbsn.com
+DOMAIN-SUFFIX,me-client.eservice.emarsys.net
+DOMAIN-SUFFIX,mobile-sdk-config.gservice.emarsys.net
+DOMAIN-SUFFIX,production-cmp.isgprivacy.cbsi.com
+DOMAIN-SUFFIX,r.mradx.net
+DOMAIN-SUFFIX,sdk.qikify.com
+DOMAIN-SUFFIX,sdk.split.io
+DOMAIN-SUFFIX,sitegenesis.production.deckers.coremedia.cloud
+DOMAIN-SUFFIX,www.tapresearch.com
