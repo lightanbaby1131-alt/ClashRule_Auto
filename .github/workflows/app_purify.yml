@@ -45,7 +45,7 @@ jobs:
           if git status --porcelain | grep .; then
             git add Clash/Ruleset/AppPurify/AppPurify.list
             git add .github/tmp/*.txt
-            git commit -m "应用精华净化规则"
+            git commit -m "应用广告净化规则"
             git push origin main
           else
             echo "No changes."
