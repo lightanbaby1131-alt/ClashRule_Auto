@@ -1,150 +1,124 @@
-import requests
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import re
-from urllib.parse import urlparse
+import requests
+from datetime import datetime
+import os
 
 # -----------------------------
-# 规则源定义（广告 + 应用净化）
+# 1. 规则源定义
 # -----------------------------
-SOURCES = {
-    "EasyList": [
-        ("EasyList", "https://easylist.to/easylist/easylist.txt"),
-        ("ACL4SSR_BanAD", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list"),
+RULE_SOURCES = {
+    "AdGuard.list": [
+        "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"
     ],
-    "AdGuard": [
-        ("AdGuard_Base", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"),
-        ("AdGuard_DNS_Filter", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/rules.txt"),
+    "Advertising.list": [
+        "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
     ],
-    "Advertising": [
-        ("Advertising", "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Advertising/Advertising.list")
+    "AppPurify.list": [
+        "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt"
     ],
-    "AppPurify": [
-        ("ACL4SSR_BanProgramAD", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanProgramAD.list"),
-        ("ACL4SSR_BanEasyList", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanEasyList.list"),
-        ("ACL4SSR_BanEasyListChina", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanEasyListChina.list"),
-        ("ACL4SSR_BanEasyPrivacy", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanEasyPrivacy.list"),
-        ("BM_AdBlock", "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AdBlock/AdBlock.list"),
-        ("BM_VideoAds", "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/VideoAds/VideoAds.list"),
-        ("BM_App", "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/App/App.list"),
-        ("CatsTeam_DNS", "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt"),
-        ("CatsTeam_App", "https://raw.githubusercontent.com/Cats-Team/AdRules/main/app.txt"),
+    "EasyList.list": [
+        "https://easylist.to/easylist/easylist.txt"
+    ],
+    "BanEasyPrivacy.list": [
+        "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanEasyPrivacy.list",
+        "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_general.txt",
+        "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt",
+        "https://raw.githubusercontent.com/blocklistproject/Lists/master/privacy.txt"
     ]
 }
 
-# 输出路径
-OUTPUT_DIR = Path("Clash/Ruleset/AD")
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-OUTPUT_FILES = {
-    "EasyList": OUTPUT_DIR / "EasyList.list",
-    "AdGuard": OUTPUT_DIR / "AdGuard.list",
-    "Advertising": OUTPUT_DIR / "Advertising.list",
-    "AppPurify": OUTPUT_DIR / "AppPurify.list",
-}
-
-# 临时目录
-TMP_DIR = Path(".github/tmp")
-TMP_DIR.mkdir(parents=True, exist_ok=True)
-
-
 # -----------------------------
-# 工具函数
+# 2. OpenClash 可识别域名提取
 # -----------------------------
-def now_bj():
-    return datetime.now(timezone(timedelta(hours=8))).strftime("%Y年%m月%d日 %H:%M")
+DOMAIN_RE = re.compile(
+    r"^(?:\|\|)?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:\^)?$"
+)
 
-
-def fetch(url):
-    resp = requests.get(url, timeout=60)
-    resp.raise_for_status()
-    return resp.text.splitlines()
-
-
-def extract_domain(line):
-    line = line.strip()
-
-    if not line or line.startswith("!") or line.startswith("@@"):
-        return None
-    if "##" in line or "#@" in line:
-        return None
-
-    if line.startswith("||"):
-        d = re.split(r"[\^/]", line[2:], 1)[0]
-        return d if "." in d else None
-
-    if line.startswith("|http"):
-        try:
-            host = urlparse(line.lstrip("|")).hostname
-            return host if host and "." in host else None
-        except:
-            return None
-
-    if line.startswith("DOMAIN-SUFFIX,"):
-        return line.split(",", 1)[1].strip()
-
-    if line.startswith("DOMAIN,"):
-        return line.split(",", 1)[1].strip()
-
-    if re.match(r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", line):
-        return line
-
-    return None
-
-
-def extract_group(group_name, sources):
+def extract_domains(text):
     domains = set()
+    for line in text.splitlines():
+        line = line.strip()
 
-    for name, url in sources:
-        try:
-            lines = fetch(url)
-        except:
+        if not line or line.startswith("!") or line.startswith("#"):
             continue
 
-        for line in lines:
-            d = extract_domain(line)
-            if d:
-                domains.add(d.lower())
+        line = re.sub(r"^(0\.0\.0\.0|127\.0\.0\.1)\s+", "", line)
 
-    tmp_file = TMP_DIR / f"{group_name}.txt"
-    tmp_file.write_text("\n".join(sorted(domains)), encoding="utf-8")
+        m = DOMAIN_RE.match(line)
+        if m:
+            domains.add(m.group(1).lower())
 
     return domains
 
+# -----------------------------
+# 3. 下载规则
+# -----------------------------
+def download(url):
+    try:
+        r = requests.get(url, timeout=20)
+        r.raise_for_status()
+        return r.text
+    except:
+        return ""
 
 # -----------------------------
-# 主逻辑
+# 4. 版本号管理
+# -----------------------------
+def load_version():
+    if not os.path.exists("version.txt"):
+        with open("version.txt", "w") as f:
+            f.write("1.0.0")
+        return "1.0.0"
+
+    with open("version.txt", "r") as f:
+        return f.read().strip()
+
+def bump_version(version):
+    major, minor, patch = map(int, version.split("."))
+    patch += 1
+    new_version = f"{major}.{minor}.{patch}"
+    with open("version.txt", "w") as f:
+        f.write(new_version)
+    return new_version
+
+# -----------------------------
+# 5. 主流程
 # -----------------------------
 def main():
-    groups = {}
+    version = load_version()
+    version = bump_version(version)
+    updated_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-    # 读取四组规则
-    for group_name, src in SOURCES.items():
-        groups[group_name] = extract_group(group_name, src)
+    all_files_data = {}
 
-    # -----------------------------
-    # 四组文件互相去重
-    # -----------------------------
-    groups["AdGuard"] -= groups["EasyList"]
-    groups["Advertising"] -= groups["EasyList"] | groups["AdGuard"]
-    groups["AppPurify"] -= groups["EasyList"] | groups["AdGuard"] | groups["Advertising"]
+    # 下载并处理每个规则文件
+    for filename, urls in RULE_SOURCES.items():
+        domains = set()
+        for url in urls:
+            text = download(url)
+            domains |= extract_domains(text)
+        all_files_data[filename] = domains
 
-    # -----------------------------
-    # 写入四个最终文件
-    # -----------------------------
-    for group_name, domains in groups.items():
-        path = OUTPUT_FILES[group_name]
+    # 文件之间相互去重
+    filenames = list(all_files_data.keys())
+    for i in range(len(filenames)):
+        for j in range(len(filenames)):
+            if i != j:
+                all_files_data[filenames[i]] -= all_files_data[filenames[j]]
 
-        header = [
-            f"# 内容：{group_name} 规则（自动合并 + 去重）",
-            f"# 总数量：{len(domains)} 条",
-            f"# 更新时间（北京时间）：{now_bj()}",
-            "",
-        ]
+    # 写入最终 .list 文件
+    for filename, domains in all_files_data.items():
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(f"# Version: {version}\n")
+            f.write(f"# Updated: {updated_time}\n\n")
+            for d in sorted(domains):
+                f.write(d + "\n")
 
-        rules = [f"DOMAIN-SUFFIX,{d}" for d in sorted(domains)]
-        path.write_text("\n".join(header + rules), encoding="utf-8")
-
+    print(f"规则构建完成，版本号 {version}，更新时间 {updated_time}")
 
 if __name__ == "__main__":
     main()
