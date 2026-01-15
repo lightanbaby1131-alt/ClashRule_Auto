@@ -49,6 +49,10 @@ def extract_domain(line: str) -> str | None:
 def convert(outfile: str):
     outfile_path = Path(outfile)
 
+    # 临时文件目录
+    tmp = Path(".github/workflows/tmp")
+    tmp.mkdir(parents=True, exist_ok=True)
+
     old_rules = set()
     if outfile_path.exists():
         for line in outfile_path.read_text(encoding="utf-8").splitlines():
@@ -109,12 +113,10 @@ def convert(outfile: str):
 
     print(f"Generated {outfile} with {total} rules.")
 
-    Path("advertising_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
-    Path("advertising_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
-
-    # 固定提交信息
-    commit_msg = "advertising_merge整合版广告拦截规则"
-    Path("commit_message_advertising.txt").write_text(commit_msg, encoding="utf-8")
+    # 写入 tmp 目录
+    (tmp / "advertising_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
+    (tmp / "advertising_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
+    (tmp / "commit_message_advertising.txt").write_text("advertising_merge整合版广告拦截规则", encoding="utf-8")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
