@@ -36,11 +36,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 检查是否有变化
           if git status --porcelain | grep .; then
             git add Clash/Ruleset/AD/EasyList.list
             git add Clash/Ruleset/AD/AdGuard.list
             git add Clash/Ruleset/AD/Advertising.list
+            git add .github/tmp/*.txt
             git commit -m "广告拦截规则 自动更新"
             git push
           else
