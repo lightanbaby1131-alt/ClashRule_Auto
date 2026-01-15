@@ -1,28 +1,41 @@
 import requests
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-import difflib
 import re
 from urllib.parse import urlparse
 
-# 规则来源 1：EasyList
-EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
+# -----------------------------
+# 规则源定义
+# -----------------------------
+SOURCES = {
+    "easylist_group": [
+        ("EasyList", "https://easylist.to/easylist/easylist.txt"),
+        ("ACL4SSR BanAD", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/refs/heads/master/Clash/BanAD.list"),
+    ],
+    "adguard_group": [
+        ("AdGuard Base", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"),
+        ("AdGuard Mobile", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/mobile.txt"),
+        ("AdGuard Tracking", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/tracking.txt"),
+    ],
+    "advertising_group": [
+        ("Advertising", "https://raw.githubusercontent.com/xxx/Advertising.list")  # ← 你填入自己的 Advertising URL
+    ]
+}
 
-# 规则来源 2：ACL4SSR BanAD
-ACL4SSR_BANAD_URL = "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/refs/heads/master/Clash/BanAD.list"
+# 输出路径
+OUTPUT_EASYLIST = Path("Clash/Ruleset/AD/EasyList.list")
+OUTPUT_ADGUARD = Path("Clash/Ruleset/AD/AdGuard.list")
+OUTPUT_ADVERTISING = Path("Clash/Ruleset/AD/Advertising.list")
 
-# 输出路径（OpenClash 规则集）
-OUTPUT = Path("Clash/Ruleset/AD/EasyList.list")
-
-# 临时目录（不提交）
 TMP_DIR = Path(".github/tmp")
 TMP_DIR.mkdir(parents=True, exist_ok=True)
-PREV = TMP_DIR / "EasyList_prev.txt"
 
 
-def now_beijing():
-    tz = timezone(timedelta(hours=8))
-    return datetime.now(tz)
+# -----------------------------
+# 工具函数
+# -----------------------------
+def now_bj():
+    return datetime.now(timezone(timedelta(hours=8))).strftime("%Y年%m月%d日 %H:%M")
 
 
 def fetch(url):
@@ -31,58 +44,27 @@ def fetch(url):
     return resp.text.splitlines()
 
 
-def parse_easylist_meta(lines):
-    version = None
-    last_modified_utc = None
-
-    for line in lines[:50]:
-        if line.startswith("! Version:"):
-            version = line.split(":", 1)[1].strip()
-        if line.startswith("! Last modified:"):
-            last_modified_utc = line.split(":", 1)[1].strip()
-
-    return version, last_modified_utc
-
-
-def utc_to_beijing(utc_str):
-    try:
-        dt = datetime.strptime(
-            utc_str.replace("UTC", "").strip(), "%d %b %Y %H:%M"
-        )
-        dt = dt.replace(tzinfo=timezone.utc).astimezone(
-            timezone(timedelta(hours=8))
-        )
-        return dt.strftime("%Y年%m月%d日 %H:%M")
-    except:
-        return "无"
-
-
-def extract_domain_from_rule(line: str):
-    if line.startswith("@@"):
+def extract_domain(line):
+    line = line.strip()
+    if not line or line.startswith("!") or line.startswith("@@"):
         return None
     if "##" in line or "#@" in line:
         return None
 
     if line.startswith("||"):
-        body = line[2:]
-        body = re.split(r"[\^/]", body, 1)[0]
-        if "." in body and not body.startswith("."):
-            return body
+        d = re.split(r"[\^/]", line[2:], 1)[0]
+        return d if "." in d else None
 
     if line.startswith("|http"):
-        url = line.lstrip("|")
         try:
-            parsed = urlparse(url)
-            host = parsed.hostname
-            if host and "." in host:
-                return host
+            host = urlparse(line.lstrip("|")).hostname
+            return host if host and "." in host else None
         except:
-            pass
+            return None
 
     if line.startswith("DOMAIN-SUFFIX,"):
         d = line.split(",", 1)[1].strip()
-        if "." in d:
-            return d
+        return d if "." in d else None
 
     if re.match(r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", line):
         return line
@@ -90,85 +72,65 @@ def extract_domain_from_rule(line: str):
     return None
 
 
-def extract_domains(lines):
+def extract_domains_from_source(name, url):
+    lines = fetch(url)
     domains = set()
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith("!"):
-            continue
-        if line.startswith("["):
-            continue
 
-        d = extract_domain_from_rule(line)
+    for line in lines:
+        d = extract_domain(line)
         if d:
             domains.add(d.lower())
 
     return domains
 
 
-def diff_stats(old, new):
-    diff = difflib.ndiff(old, new)
-    add = sum(1 for d in diff if d.startswith("+ "))
-    diff = difflib.ndiff(old, new)
-    remove = sum(1 for d in diff if d.startswith("- "))
-    return add, remove
-
-
+# -----------------------------
+# 主逻辑
+# -----------------------------
 def main():
-    # EasyList
-    easy_lines = fetch(EASYLIST_URL)
-    easy_version, easy_last_utc = parse_easylist_meta(easy_lines)
-    easy_last_bj = utc_to_beijing(easy_last_utc) if easy_last_utc else "无"
-    domains_easy = extract_domains(easy_lines)
+    # 1. 读取所有规则源
+    easylist_domains = set()
+    adguard_domains = set()
+    advertising_domains = set()
 
-    # ACL4SSR BanAD
-    banad_lines = fetch(ACL4SSR_BANAD_URL)
-    domains_banad = extract_domains(banad_lines)
+    # EasyList + BanAD
+    for name, url in SOURCES["easylist_group"]:
+        easylist_domains |= extract_domains_from_source(name, url)
 
-    # 合并去重
-    all_domains = sorted(domains_easy | domains_banad)
-    rules = [f"DOMAIN-SUFFIX,{d}" for d in all_domains]
-    total = len(rules)
+    # AdGuard 三个库
+    for name, url in SOURCES["adguard_group"]:
+        adguard_domains |= extract_domains_from_source(name, url)
 
-    # diff
-    if PREV.exists():
-        old_rules = PREV.read_text(encoding="utf-8").splitlines()
-    else:
-        old_rules = []
+    # Advertising 单独库
+    for name, url in SOURCES["advertising_group"]:
+        advertising_domains |= extract_domains_from_source(name, url)
 
-    added, removed = diff_stats(old_rules, rules)
+    # -----------------------------
+    # 2. 全局去重（互斥）
+    # -----------------------------
+    # EasyList 优先级最高
+    adguard_domains -= easylist_domains
+    advertising_domains -= easylist_domains
+    advertising_domains -= adguard_domains
 
-    # 时间
-    now_bj = now_beijing().strftime("%Y年%m月%d日 %H:%M")
+    # -----------------------------
+    # 3. 写入三个 .list 文件
+    # -----------------------------
+    OUTPUT_EASYLIST.parent.mkdir(parents=True, exist_ok=True)
 
-    # 头部
-    header = [
-        "# 内容：广告拦截规则 EasyList + ACL4SSR BanAD",
-        f"# 总数量：{total} 条",
-        f"# 新增：{added} 条",
-        f"# 删除：{removed} 条",
-        f"# 更新时间（北京时间）：{now_bj}",
-        "",
-        "# 规则来源 1：EasyList",
-        f"# 原规则来源：{EASYLIST_URL}",
-        f"# 原规则版本：{easy_version or '无'}",
-        f"# 原规则更新时间（北京时间）：{easy_last_bj}",
-        "",
-        "# 规则来源 2：ACL4SSR BanAD",
-        f"# 原规则来源：{ACL4SSR_BANAD_URL}",
-        f"# 原规则版本：无",
-        f"# 原规则更新时间（北京时间）：无",
-        "",
-    ]
+    def write_list(path, title, domains):
+        header = [
+            f"# 内容：{title}",
+            f"# 总数量：{len(domains)} 条",
+            f"# 更新时间（北京时间）：{now_bj()}",
+            "",
+        ]
+        rules = [f"DOMAIN-SUFFIX,{d}" for d in sorted(domains)]
+        path.write_text("\n".join(header + rules), encoding="utf-8")
 
-    # 写入最终文件
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text("\n".join(header + rules), encoding="utf-8")
-
-    # 保存纯规则用于 diff
-    PREV.write_text("\n".join(rules), encoding="utf-8")
+    write_list(OUTPUT_EASYLIST, "EasyList + ACL4SSR BanAD", easylist_domains)
+    write_list(OUTPUT_ADGUARD, "AdGuard Base + Mobile + Tracking", adguard_domains)
+    write_list(OUTPUT_ADVERTISING, "Advertising", advertising_domains)
 
 
 if __name__ == "__main__":
