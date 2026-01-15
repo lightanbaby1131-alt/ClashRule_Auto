@@ -42,11 +42,53 @@ RULE_SOURCES = {
 }
 
 # -----------------------------
-# 2. Clash/OpenClash 域名提取
+# 2. 白名单（防止误杀核心域名）
 # -----------------------------
-DOMAIN_RE = re.compile(
-    r"(?:\|\|)?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:\^)?"
-)
+WHITELIST_DOMAINS = {
+    # 基础服务
+    "google.com", "gstatic.com", "googleapis.com", "gmail.com",
+    "apple.com", "icloud.com", "cdn.apple.com",
+    "microsoft.com", "live.com", "outlook.com", "windows.com",
+    "github.com", "githubusercontent.com", "gitlab.com",
+    "facebook.com", "fbcdn.net", "whatsapp.com",
+    "twitter.com", "x.com", "t.co",
+    "youtube.com", "ytimg.com", "youtu.be",
+
+    # 常见 CDN / 静态资源
+    "cloudflare.com", "cloudflare-dns.com", "cloudfront.net",
+    "akamaihd.net", "akamai.net",
+    "fastly.net",
+    "jsdelivr.net",
+    "bootstrapcdn.com",
+    "fontawesome.com",
+    "gstatic.com",
+    "fonts.googleapis.com", "fonts.gstatic.com",
+
+    # 开发相关
+    "docker.com", "docker.io",
+    "python.org", "pypi.org",
+    "nodejs.org", "npmjs.com",
+
+    # 你可以按需继续加
+}
+
+def is_whitelisted(domain: str) -> bool:
+    domain = domain.lower()
+    if domain in WHITELIST_DOMAINS:
+        return True
+    # 子域名也保护，例如 www.github.com
+    parts = domain.split(".")
+    for i in range(len(parts) - 2):
+        sub = ".".join(parts[i+1:])
+        if sub in WHITELIST_DOMAINS:
+            return True
+    return False
+
+# -----------------------------
+# 3. 域名提取（智能过滤）
+# -----------------------------
+# 粗匹配域名片段
+DOMAIN_CANDIDATE_RE = re.compile(r"([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})")
 
 def extract_domains(text: str) -> set:
     domains = set()
@@ -56,37 +98,67 @@ def extract_domains(text: str) -> set:
         if not line or line.startswith("!") or line.startswith("#"):
             continue
 
-        # hosts 格式
+        # 去掉 hosts 前缀
         line = re.sub(r"^(0\.0\.0\.0|127\.0\.0\.1)\s+", "", line)
 
-        # Clash 格式（DOMAIN-SUFFIX,xxx）
-        if line.startswith("DOMAIN-SUFFIX,"):
-            domains.add(line.split(",", 1)[1].strip().lower())
-            continue
-        if line.startswith("DOMAIN,"):
-            domains.add(line.split(",", 1)[1].strip().lower())
+        # Clash 规则
+        if line.startswith("DOMAIN-SUFFIX,") or line.startswith("DOMAIN,"):
+            try:
+                d = line.split(",", 1)[1].strip().lower()
+                if is_valid_domain(d):
+                    domains.add(d)
+            except Exception:
+                pass
             continue
 
-        # Adblock 语法 ||example.com^
-        m = DOMAIN_RE.search(line)
-        if m:
-            domains.add(m.group(1).lower())
+        # 明显不是域名规则的行直接跳过
+        if any(x in line for x in ["/", "=", "?", ":", "*", "^$", "$", "@" ]):
+            # 但保留 Adblock 的 ||example.com^ 这种
+            if not line.startswith("||"):
+                continue
 
+        # 从行中提取域名候选
+        for m in DOMAIN_CANDIDATE_RE.finditer(line):
+            d = m.group(1).lower()
+            if is_valid_domain(d):
+                domains.add(d)
+
+    # 去掉白名单域名
+    domains = {d for d in domains if not is_whitelisted(d)}
     return domains
 
+def is_valid_domain(domain: str) -> bool:
+    # 过滤 IP
+    if re.match(r"^\d{1,3}(\.\d{1,3}){3}$", domain):
+        return False
+    # 不允许下划线
+    if "_" in domain:
+        return False
+    # 至少一层子域 + TLD
+    if "." not in domain:
+        return False
+    # TLD 长度检查
+    tld = domain.split(".")[-1]
+    if not (2 <= len(tld) <= 24):
+        return False
+    # 不能以 - 开头或结尾
+    if domain.startswith("-") or domain.endswith("-"):
+        return False
+    return True
+
 # -----------------------------
-# 3. 下载规则
+# 4. 下载规则
 # -----------------------------
 def download(url: str) -> str:
     try:
         r = requests.get(url, timeout=30)
         r.raise_for_status()
         return r.text
-    except:
+    except Exception:
         return ""
 
 # -----------------------------
-# 4. 版本号管理
+# 5. 版本号管理
 # -----------------------------
 def load_version() -> str:
     if not os.path.exists(VERSION_FILE):
@@ -106,7 +178,7 @@ def bump_version(version: str) -> str:
     return new_version
 
 # -----------------------------
-# 5. 主流程
+# 6. 主流程
 # -----------------------------
 def main():
     version = load_version()
