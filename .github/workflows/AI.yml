@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # 必须完整克隆，否则无法 pull
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
