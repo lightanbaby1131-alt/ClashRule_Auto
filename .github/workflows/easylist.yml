@@ -34,7 +34,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           if git status --porcelain | grep .; then
-            git add rules/EasyList.list
+            git add Clash/Ruleset/AD/EasyList.list
             git commit -m "EasyList广告拦截规则 自动更新"
             git push
           else
