@@ -1,6 +1,6 @@
 # 内容：Foreign AI 域名合并规则（分类 + 去重）
-# 总数量：34 条
-# 更新时间（北京时间）：2026年01月15日 17:01
+# 总数量：63 条
+# 更新时间（北京时间）：2026年01月15日 17:05
 
 # ===== OpenAI =====
 DOMAIN-SUFFIX,ai.com
@@ -55,5 +55,36 @@ DOMAIN-SUFFIX,servd-anthropic-website.b-cdn.net
 # ===== Perplexity =====
 
 # ===== DeepL =====
+
+# ===== ForeignAI_Extra =====
+DOMAIN-SUFFIX,ai.azure.com
+DOMAIN-SUFFIX,ai.google.dev
+DOMAIN-SUFFIX,aistudio.google.com
+DOMAIN-SUFFIX,api.githubcopilot.com
+DOMAIN-SUFFIX,api.groq.com
+DOMAIN-SUFFIX,api.together.xyz
+DOMAIN-SUFFIX,bard.google.com
+DOMAIN-SUFFIX,challenges.cloudflare.com
+DOMAIN-SUFFIX,claude.com
+DOMAIN-SUFFIX,claudeusercontent.com
+DOMAIN-SUFFIX,console.groq.com
+DOMAIN-SUFFIX,copilot-proxy.githubusercontent.com
+DOMAIN-SUFFIX,copilot.cloud.microsoft
+DOMAIN-SUFFIX,copilot.microsoft.com
+DOMAIN-SUFFIX,cursor.com
+DOMAIN-SUFFIX,cursor.sh
+DOMAIN-SUFFIX,gemini.google.com
+DOMAIN-SUFFIX,generativelanguage.googleapis.com
+DOMAIN-SUFFIX,grazie.ai
+DOMAIN-SUFFIX,grazie.aws.intellij.net
+DOMAIN-SUFFIX,jetbrains.ai
+DOMAIN-SUFFIX,makersuite.google.com
+DOMAIN-SUFFIX,meta.ai
+DOMAIN-SUFFIX,mistral.ai
+DOMAIN-SUFFIX,notebooklm.google.com
+DOMAIN-SUFFIX,perplexity.ai
+DOMAIN-SUFFIX,sora.com
+DOMAIN-SUFFIX,sydney.bing.com
+DOMAIN-SUFFIX,x.ai
 
 # ===== AI_Domains =====
