@@ -34,28 +34,16 @@ jobs:
         run: |
           python scripts/convert_easylist.py "$OUTPUT_PATH"
 
-      - name: Prepare commit message
-        run: |
-          if [ -f commit_message.txt ]; then
-            MSG=$(cat commit_message.txt)
-          else
-            MSG="chore: update easylist.list"
-          fi
-
-          # 防止空 commit message
-          if [ -z "$MSG" ]; then
-            MSG="chore: update easylist.list"
-          fi
-
-          echo "$MSG" > final_commit_msg.txt
-
       - name: Commit and push if changed
         run: |
           if git status --porcelain | grep -qE ".list|README.md"; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add .
-            git commit -F final_commit_msg.txt
+
+            # 使用 tmp 目录中的提交信息
+            git commit -F .github/workflows/tmp/commit_message_easylist.txt
+
             git push
           else
             echo "No changes detected"
