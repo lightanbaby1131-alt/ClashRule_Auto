@@ -5,16 +5,16 @@ import re
 from urllib.parse import urlparse
 
 # -----------------------------
-# 规则源定义（AdGuard Mobile 已删除）
+# 规则源定义（全部为可用地址）
 # -----------------------------
 SOURCES = {
     "easylist_group": [
         ("EasyList", "https://easylist.to/easylist/easylist.txt"),
-        ("ACL4SSR BanAD", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/refs/heads/master/Clash/BanAD.list"),
+        ("ACL4SSR_BanAD", "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/refs/heads/master/Clash/BanAD.list"),
     ],
     "adguard_group": [
-        ("AdGuard Base", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"),
-        ("AdGuard Tracking", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/tracking.txt"),
+        ("AdGuard_Base", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"),
+        ("AdGuard_DNS_Filter", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/rules.txt"),
     ],
     "advertising_group": [
         ("Advertising", "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/Advertising/Advertising.list")
@@ -26,7 +26,7 @@ OUTPUT_EASYLIST = Path("Clash/Ruleset/AD/EasyList.list")
 OUTPUT_ADGUARD = Path("Clash/Ruleset/AD/AdGuard.list")
 OUTPUT_ADVERTISING = Path("Clash/Ruleset/AD/Advertising.list")
 
-# 临时目录（必须全部放这里）
+# 临时目录
 TMP_DIR = Path(".github/tmp")
 TMP_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -54,12 +54,10 @@ def extract_domain(line):
     if "##" in line or "#@" in line:
         return None
 
-    # EasyList: ||domain.com^
     if line.startswith("||"):
         d = re.split(r"[\^/]", line[2:], 1)[0]
         return d if "." in d else None
 
-    # EasyList: |https://domain.com
     if line.startswith("|http"):
         try:
             host = urlparse(line.lstrip("|")).hostname
@@ -67,17 +65,14 @@ def extract_domain(line):
         except:
             return None
 
-    # Clash: DOMAIN-SUFFIX,domain.com
     if line.startswith("DOMAIN-SUFFIX,"):
         d = line.split(",", 1)[1].strip()
         return d if "." in d else None
 
-    # Clash: DOMAIN,domain.com
     if line.startswith("DOMAIN,"):
         d = line.split(",", 1)[1].strip()
         return d if "." in d else None
 
-    # 纯域名
     if re.match(r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", line):
         return line
 
@@ -93,8 +88,8 @@ def extract_domains_from_source(name, url):
         if d:
             domains.add(d.lower())
 
-    # 保存临时文件（调试用）
-    tmp_file = TMP_DIR / f"{name.replace(' ', '_')}.txt"
+    # 保存临时文件
+    tmp_file = TMP_DIR / f"{name}.txt"
     tmp_file.write_text("\n".join(sorted(domains)), encoding="utf-8")
 
     return domains
@@ -112,18 +107,17 @@ def main():
     for name, url in SOURCES["easylist_group"]:
         easylist_domains |= extract_domains_from_source(name, url)
 
-    # AdGuard Base + Tracking
+    # AdGuard Base + DNS Filter
     for name, url in SOURCES["adguard_group"]:
         adguard_domains |= extract_domains_from_source(name, url)
 
-    # Advertising 单独库
+    # Advertising
     for name, url in SOURCES["advertising_group"]:
         advertising_domains |= extract_domains_from_source(name, url)
 
     # -----------------------------
     # 全局去重（互斥）
     # -----------------------------
-    # EasyList 优先级最高
     adguard_domains -= easylist_domains
     advertising_domains -= easylist_domains
     advertising_domains -= adguard_domains
@@ -144,7 +138,7 @@ def main():
         path.write_text("\n".join(header + rules), encoding="utf-8")
 
     write_list(OUTPUT_EASYLIST, "EasyList + ACL4SSR BanAD", easylist_domains)
-    write_list(OUTPUT_ADGUARD, "AdGuard Base + Tracking", adguard_domains)
+    write_list(OUTPUT_ADGUARD, "AdGuard Base + DNS Filter", adguard_domains)
     write_list(OUTPUT_ADVERTISING, "Advertising", advertising_domains)
 
 
