@@ -1,9 +1,13 @@
 name: Update EasyList
 
+permissions:
+  contents: write
+
 on:
   schedule:
-    - cron: "0 22 * * *"   # 每天 UTC 22:00（北京时间次日 06:00）
+    - cron: "0 22 * * *"
   workflow_dispatch:
+
 
 jobs:
   update-easylist:
