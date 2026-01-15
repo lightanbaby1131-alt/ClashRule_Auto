@@ -38,7 +38,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add .
-            git commit -m "chore: update easylist.list"
+            git commit -F commit_message.txt
             git push
           else
             echo "No changes detected"
