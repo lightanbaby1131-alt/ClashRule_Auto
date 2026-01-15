@@ -42,21 +42,10 @@ RULE_SOURCES = {
 }
 
 # -----------------------------
-# 2. 文件描述（用于头部注释）
-# -----------------------------
-FILE_DESCRIPTIONS = {
-    "AdGuard.list": "AdGuard DNS 广告过滤规则（去重后专属域名集合）。",
-    "Advertising.list": "综合广告域名规则（基于 StevenBlack hosts，去重后专属域名集合）。",
-    "AppPurify.list": "App 级广告屏蔽规则（基于 AdAway，去重后专属域名集合）。",
-    "EasyList.list": "EasyList 主规则转换的域名列表（去重后专属域名集合）。",
-    "BanEasyPrivacy.list": "隐私防护聚合规则（BanEasyPrivacy + 多源隐私列表，去重后专属域名集合）。"
-}
-
-# -----------------------------
-# 3. OpenClash 可识别域名提取
+# 2. Clash/OpenClash 域名提取
 # -----------------------------
 DOMAIN_RE = re.compile(
-    r"^(?:\|\|)?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:\^)?$"
+    r"(?:\|\|)?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:\^)?"
 )
 
 def extract_domains(text: str) -> set:
@@ -67,16 +56,26 @@ def extract_domains(text: str) -> set:
         if not line or line.startswith("!") or line.startswith("#"):
             continue
 
+        # hosts 格式
         line = re.sub(r"^(0\.0\.0\.0|127\.0\.0\.1)\s+", "", line)
 
-        m = DOMAIN_RE.match(line)
+        # Clash 格式（DOMAIN-SUFFIX,xxx）
+        if line.startswith("DOMAIN-SUFFIX,"):
+            domains.add(line.split(",", 1)[1].strip().lower())
+            continue
+        if line.startswith("DOMAIN,"):
+            domains.add(line.split(",", 1)[1].strip().lower())
+            continue
+
+        # Adblock 语法 ||example.com^
+        m = DOMAIN_RE.search(line)
         if m:
             domains.add(m.group(1).lower())
 
     return domains
 
 # -----------------------------
-# 4. 下载规则
+# 3. 下载规则
 # -----------------------------
 def download(url: str) -> str:
     try:
@@ -87,7 +86,7 @@ def download(url: str) -> str:
         return ""
 
 # -----------------------------
-# 5. 版本号管理
+# 4. 版本号管理
 # -----------------------------
 def load_version() -> str:
     if not os.path.exists(VERSION_FILE):
@@ -107,7 +106,7 @@ def bump_version(version: str) -> str:
     return new_version
 
 # -----------------------------
-# 6. 主流程
+# 5. 主流程
 # -----------------------------
 def main():
     version = load_version()
@@ -124,12 +123,6 @@ def main():
             if text:
                 domains |= extract_domains(text)
 
-        # 临时保存原始域名（可调试）
-        tmp_path = os.path.join(TMP_DIR, filename + ".domains.tmp")
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            for d in sorted(domains):
-                f.write(d + "\n")
-
         all_files_data[filename] = domains
 
     # 2）文件之间相互去重（按优先级）
@@ -141,13 +134,10 @@ def main():
     # 3）写入最终 Clash 可识别 .list 文件（DOMAIN-SUFFIX,xxx）
     for filename in ordered_files:
         domains = all_files_data[filename]
-        description = FILE_DESCRIPTIONS.get(filename, "")
-
         output_path = os.path.join(OUTPUT_DIR, filename)
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(f"# File: {filename}\n")
-            f.write(f"# Description: {description}\n")
             f.write(f"# Version: {version}\n")
             f.write(f"# Updated: {updated_time}\n")
             f.write("# Format: DOMAIN-SUFFIX,example.com\n\n")
