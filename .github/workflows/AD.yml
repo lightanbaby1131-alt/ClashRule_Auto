@@ -1,16 +1,15 @@
-name: Update EasyList
+name: Update AdBlock Rules
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: "0 22 * * *"
+    - cron: "0 22 * * *"   # 每天 UTC 22:00（北京时间次日 06:00）
   workflow_dispatch:
 
-
 jobs:
-  update-easylist:
+  update-rules:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,9 +25,9 @@ jobs:
         run: |
           pip install requests
 
-      - name: Generate EasyList.list
+      - name: Generate rules
         run: |
-          python scripts/convert_easylist.py
+          python scripts/convert_rules.py
 
       - name: Commit and push
         env:
@@ -37,9 +36,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # 检查是否有变化
           if git status --porcelain | grep .; then
             git add Clash/Ruleset/AD/EasyList.list
-            git commit -m "EasyList广告拦截规则 自动更新"
+            git add Clash/Ruleset/AD/AdGuard.list
+            git add Clash/Ruleset/AD/Advertising.list
+            git commit -m "广告拦截规则 自动更新"
             git push
           else
             echo "No changes."
