@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 # -----------------------------
-# AI 规则源（可扩展）
+# AI 规则源（已加入你的 ForeignAI 来源）
 # -----------------------------
 AI_SOURCES = {
     "OpenAI": [
@@ -39,12 +39,19 @@ AI_SOURCES = {
     "DeepL": [
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/DeepL/DeepL.list",
     ],
+
+    # 新增来源（你的 Online-Clash ForeignAI）
+    "ForeignAI_Extra": [
+        "https://raw.githubusercontent.com/lightanbaby1131-alt/Online-Clash/refs/heads/main/Ruleset/ForeignAI.list"
+    ],
+
+    # AI-Domains（纯域名，需要转换）
     "AI_Domains": [
         "https://raw.githubusercontent.com/ai-collection/ai-domains/main/domains.txt"
     ]
 }
 
-# 输出路径（最终文件名）
+# 输出路径
 OUTPUT = Path("Clash/Ruleset/AI/ForeignAI.list")
 
 # 临时目录
@@ -107,7 +114,7 @@ def main():
                 if d:
                     group_set.add(d.lower())
 
-        # 保存临时文件（全部放在 .github/tmp/）
+        # 保存临时文件
         tmp_file = TMP_DIR / f"{group}.txt"
         tmp_file.write_text("\n".join(sorted(group_set)), encoding="utf-8")
 
