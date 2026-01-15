@@ -1,0 +1,42 @@
+name: Update EasyList
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # 每天 UTC 22:00（北京时间次日 06:00）
+  workflow_dispatch:
+
+jobs:
+  update-easylist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Generate EasyList.list
+        run: |
+          python scripts/convert_easylist.py
+
+      - name: Commit and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git status --porcelain | grep .; then
+            git add rules/EasyList.list
+            git commit -m "EasyList广告拦截规则 自动更新"
+            git push
+          else
+            echo "No changes."
+          fi
