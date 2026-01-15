@@ -2,17 +2,17 @@ import requests
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import difflib
+import re
+from urllib.parse import urlparse
 
 EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
 
-# 最终输出文件
+# 最终输出：OpenClash 规则集
 OUTPUT = Path("Clash/Ruleset/AD/EasyList.list")
 
-# 临时文件目录（不会提交）
+# 临时目录（不提交）
 TMP_DIR = Path(".github/tmp")
 TMP_DIR.mkdir(parents=True, exist_ok=True)
-
-# 上一版规则（用于 diff）
 PREV = TMP_DIR / "EasyList_prev.txt"
 
 
@@ -53,8 +53,41 @@ def utc_to_beijing(utc_str):
         return utc_str
 
 
-def extract_rules(lines):
-    rules = []
+def extract_domain_from_rule(line: str):
+    # 跳过白名单、元素隐藏等
+    if line.startswith("@@"):
+        return None
+    if "##" in line or "#@" in line:
+        return None
+
+    # 1) ||domain.com^ 形式
+    if line.startswith("||"):
+        body = line[2:]
+        body = re.split(r"[\^/]", body, 1)[0]
+        if "." in body and not body.startswith("."):
+            return body
+
+    # 2) |https://domain.com/xxx 或 http://domain.com
+    if line.startswith("|http"):
+        url = line.lstrip("|")
+        try:
+            parsed = urlparse(url)
+            host = parsed.hostname
+            if host and "." in host:
+                return host
+        except Exception:
+            pass
+
+    # 3) 纯域名形式：ad.example.com 或 example.com
+    #    不含通配符、不含特殊符号
+    if re.match(r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", line):
+        return line
+
+    return None
+
+
+def extract_domains(lines):
+    domains = set()
     for line in lines:
         line = line.strip()
         if not line:
@@ -63,7 +96,13 @@ def extract_rules(lines):
             continue
         if line.startswith("["):
             continue
-        rules.append(line)
+
+        d = extract_domain_from_rule(line)
+        if d:
+            domains.add(d.lower())
+
+    # 转成 OpenClash 规则集格式：DOMAIN-SUFFIX,domain
+    rules = [f"DOMAIN-SUFFIX,{d}" for d in sorted(domains)]
     return rules
 
 
@@ -79,10 +118,9 @@ def main():
     lines = fetch_easylist()
     version, last_modified_utc = parse_meta(lines)
 
-    rules = extract_rules(lines)
+    rules = extract_domains(lines)
     total = len(rules)
 
-    # 读取上一版
     if PREV.exists():
         old_rules = PREV.read_text(encoding="utf-8").splitlines()
     else:
@@ -90,11 +128,9 @@ def main():
 
     added, removed = diff_stats(old_rules, rules)
 
-    # 时间
     now_bj = now_beijing().strftime("%Y年%m月%d日 %H:%M")
     src_bj = utc_to_beijing(last_modified_utc) if last_modified_utc else now_bj
 
-    # 头部
     header = [
         "# 内容：广告拦截规则 EasyList",
         f"# 总数量：{total} 条",
@@ -108,11 +144,7 @@ def main():
     ]
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-
-    # 写入最终 .list
     OUTPUT.write_text("\n".join(header + rules), encoding="utf-8")
-
-    # 保存纯规则用于下次 diff（不会提交）
     PREV.write_text("\n".join(rules), encoding="utf-8")
 
 
