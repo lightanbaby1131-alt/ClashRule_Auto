@@ -22,7 +22,8 @@ jobs:
         run: pip install requests
 
       - name: Run rule builder
-        run: python3 rule_builder.py
+        run: python3 scripts/convert_all_rules.py
+
 
       - name: Commit and push
         run: |
