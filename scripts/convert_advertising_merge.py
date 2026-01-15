@@ -51,6 +51,15 @@ def convert(outfile: str):
     merged = set()
     source_info = {}
 
+    # 读取旧文件用于 diff
+    old_rules = set()
+    outfile_path = Path(outfile)
+    if outfile_path.exists():
+        for line in outfile_path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("DOMAIN"):
+                old_rules.add(line.strip())
+
+    # 下载并提取规则
     for name, url in RULE_SOURCES.items():
         print(f"Downloading {name}...")
         text = requests.get(url, timeout=30).text
@@ -67,7 +76,14 @@ def convert(outfile: str):
             "count": count,
         }
 
-    total = len(merged)
+    # diff 计算
+    new_rules = merged
+    added = new_rules - old_rules
+    removed = old_rules - new_rules
+
+    added_count = len(added)
+    removed_count = len(removed)
+    total = len(new_rules)
 
     now = datetime.utcnow() + timedelta(hours=8)
     update_time = now.strftime("%Y年%m月%d日 %H:%M")
@@ -75,6 +91,8 @@ def convert(outfile: str):
     out_lines = [
         "# 内容：广告拦截规则（多源合并版）",
         f"# 总数量：{total} 条",
+        f"# 新增：{added_count} 条",
+        f"# 删除：{removed_count} 条",
         f"# 更新时间（北京时间）：{update_time}",
         "",
         "# 规则来源：",
@@ -87,15 +105,16 @@ def convert(outfile: str):
         out_lines.append("#")
 
     out_lines.append("# ===== 广告规则 =====")
-    out_lines.extend(sorted(merged))
+    out_lines.extend(sorted(new_rules))
 
-    outfile_path = Path(outfile)
     outfile_path.parent.mkdir(parents=True, exist_ok=True)
     outfile_path.write_text("\n".join(out_lines), encoding="utf-8")
 
     print(f"Generated {outfile} with {total} rules.")
 
-    Path("commit_message.txt").write_text("Advertising合并规则", encoding="utf-8")
+    # commit message
+    commit_msg = f"Advertising合并规则（新增 {added_count}，删除 {removed_count}）"
+    Path("commit_message.txt").write_text(commit_msg, encoding="utf-8")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
