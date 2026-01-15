@@ -50,6 +50,10 @@ def parse_header(text: str):
 def convert(outfile: str):
     outfile_path = Path(outfile)
 
+    # 临时文件目录
+    tmp = Path(".github/workflows/tmp")
+    tmp.mkdir(parents=True, exist_ok=True)
+
     # 旧规则集合，用于 diff
     old_rules = set()
     if outfile_path.exists():
@@ -97,13 +101,12 @@ def convert(outfile: str):
 
     print(f"Generated {outfile} with {total} rules.")
 
-    # 写 diff 详细列表
-    Path("easylist_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
-    Path("easylist_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
+    # diff 写入 tmp 目录
+    (tmp / "easylist_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
+    (tmp / "easylist_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
 
-    # 固定提交信息
-    commit_msg = "easylist广告拦截规则"
-    Path("commit_message_easylist.txt").write_text(commit_msg, encoding="utf-8")
+    # 固定提交信息写入 tmp 目录
+    (tmp / "commit_message_easylist.txt").write_text("easylist广告拦截规则", encoding="utf-8")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
