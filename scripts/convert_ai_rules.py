@@ -44,8 +44,8 @@ AI_SOURCES = {
     ]
 }
 
-# 输出路径
-OUTPUT = Path("Clash/Ruleset/AI/AI_Merge.list")
+# 输出路径（最终文件名）
+OUTPUT = Path("Clash/Ruleset/AI/ForeignAI.list")
 
 # 临时目录
 TMP_DIR = Path(".github/tmp")
@@ -107,7 +107,7 @@ def main():
                 if d:
                     group_set.add(d.lower())
 
-        # 保存临时文件
+        # 保存临时文件（全部放在 .github/tmp/）
         tmp_file = TMP_DIR / f"{group}.txt"
         tmp_file.write_text("\n".join(sorted(group_set)), encoding="utf-8")
 
@@ -124,12 +124,12 @@ def main():
         final_groups[group] = sorted(unique)
 
     # -----------------------------
-    # 写入最终 AI_Merge.list
+    # 写入最终 ForeignAI.list
     # -----------------------------
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 
     header = [
-        "# 内容：AI 域名合并规则（分类 + 去重）",
+        "# 内容：Foreign AI 域名合并规则（分类 + 去重）",
         f"# 总数量：{len(global_set)} 条",
         f"# 更新时间（北京时间）：{now_bj()}",
         "",
