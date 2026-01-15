@@ -48,7 +48,6 @@ def parse_header(text: str):
     # 转换时间格式
     if last_modified_raw:
         try:
-            # 原格式：15 Jan 2026 02:35 UTC
             dt_utc = datetime.strptime(last_modified_raw, "%d %b %Y %H:%M UTC")
             dt_beijing = dt_utc + timedelta(hours=8)
             last_modified = dt_beijing.strftime("%Y年%m月%d日 %H:%M")
@@ -103,6 +102,9 @@ def convert(outfile: str):
     outfile_path.write_text("\n".join(out_lines), encoding="utf-8")
 
     print(f"Generated {outfile} with {total_rules} rules.")
+
+    # 固定 commit message
+    Path("commit_message.txt").write_text("Easylist广告拦截规则", encoding="utf-8")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
