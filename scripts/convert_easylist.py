@@ -37,7 +37,6 @@ def parse_header(text: str):
 
     if last_modified_raw:
         try:
-            from datetime import datetime, timedelta
             dt_utc = datetime.strptime(last_modified_raw, "%d %b %Y %H:%M UTC")
             dt_beijing = dt_utc + timedelta(hours=8)
             last_modified = dt_beijing.strftime("%Y年%m月%d日 %H:%M")
@@ -102,8 +101,8 @@ def convert(outfile: str):
     Path("easylist_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
     Path("easylist_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
 
-    # 提交信息
-    commit_msg = f"EasyList广告规则（新增 {added_count}，删除 {removed_count}）"
+    # 固定提交信息
+    commit_msg = "easylist广告拦截规则"
     Path("commit_message_easylist.txt").write_text(commit_msg, encoding="utf-8")
 
 if __name__ == "__main__":
