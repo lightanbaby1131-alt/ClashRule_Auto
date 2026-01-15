@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import sys
 
-# 多广告规则源
 RULE_SOURCES = {
     "ACL4SSR BanAD": "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list",
     "NobyDa AD_Block": "https://raw.githubusercontent.com/NobyDa/ND-AD/master/Surge/AD_Block.txt",
@@ -48,18 +47,17 @@ def extract_domain(line: str) -> str | None:
     return None
 
 def convert(outfile: str):
-    merged = set()
-    source_info = {}
-
-    # 读取旧文件用于 diff
-    old_rules = set()
     outfile_path = Path(outfile)
+
+    old_rules = set()
     if outfile_path.exists():
         for line in outfile_path.read_text(encoding="utf-8").splitlines():
             if line.startswith("DOMAIN"):
                 old_rules.add(line.strip())
 
-    # 下载并提取规则
+    merged = set()
+    source_info = {}
+
     for name, url in RULE_SOURCES.items():
         print(f"Downloading {name}...")
         text = requests.get(url, timeout=30).text
@@ -76,7 +74,6 @@ def convert(outfile: str):
             "count": count,
         }
 
-    # diff 计算
     new_rules = merged
     added = new_rules - old_rules
     removed = old_rules - new_rules
@@ -112,9 +109,11 @@ def convert(outfile: str):
 
     print(f"Generated {outfile} with {total} rules.")
 
-    # commit message
+    Path("advertising_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
+    Path("advertising_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
+
     commit_msg = f"Advertising合并规则（新增 {added_count}，删除 {removed_count}）"
-    Path("commit_message.txt").write_text(commit_msg, encoding="utf-8")
+    Path("commit_message_advertising.txt").write_text(commit_msg, encoding="utf-8")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
