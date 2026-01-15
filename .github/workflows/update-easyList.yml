@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 避免 push 失败
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,13 +34,28 @@ jobs:
         run: |
           python scripts/convert_easylist.py "$OUTPUT_PATH"
 
+      - name: Prepare commit message
+        run: |
+          if [ -f commit_message.txt ]; then
+            MSG=$(cat commit_message.txt)
+          else
+            MSG="chore: update easylist.list"
+          fi
+
+          # 防止空 commit message
+          if [ -z "$MSG" ]; then
+            MSG="chore: update easylist.list"
+          fi
+
+          echo "$MSG" > final_commit_msg.txt
+
       - name: Commit and push if changed
         run: |
-          if git status --porcelain | grep -q ".list"; then
+          if git status --porcelain | grep -qE ".list|README.md"; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add .
-            git commit -F commit_message.txt
+            git commit -F final_commit_msg.txt
             git push
           else
             echo "No changes detected"
