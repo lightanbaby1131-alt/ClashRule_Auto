@@ -35,9 +35,35 @@ def extract_domain(rule: str) -> str | None:
 
     return None
 
+def parse_header(text: str):
+    version = "Unknown"
+    last_modified_raw = None
+
+    for line in text.splitlines()[:30]:
+        if line.startswith("! Version:"):
+            version = line.replace("! Version:", "").strip()
+        if line.startswith("! Last modified:"):
+            last_modified_raw = line.replace("! Last modified:", "").strip()
+
+    # 转换时间格式
+    if last_modified_raw:
+        try:
+            # 原格式：15 Jan 2026 02:35 UTC
+            dt_utc = datetime.strptime(last_modified_raw, "%d %b %Y %H:%M UTC")
+            dt_beijing = dt_utc + timedelta(hours=8)
+            last_modified = dt_beijing.strftime("%Y年%m月%d日 %H:%M")
+        except:
+            last_modified = last_modified_raw
+    else:
+        last_modified = "Unknown"
+
+    return version, last_modified
+
 def convert(outfile: str):
     print("Downloading EasyList...")
     text = requests.get(EASYLIST_URL, timeout=30).text
+
+    version, last_modified = parse_header(text)
 
     current_category = "通用广告"
     categorized = {
@@ -55,12 +81,15 @@ def convert(outfile: str):
     total_rules = sum(len(v) for v in categorized.values())
 
     now = datetime.utcnow() + timedelta(hours=8)
-    update_time = now.strftime("%Y-%m-%d %H:%M:%S")
+    update_time = now.strftime("%Y年%m月%d日 %H:%M")
 
     out_lines = [
         "# 内容：广告拦截规则 EasyList",
         f"# 数量：{total_rules} 条",
-        f"# 更新时间：{update_time}",
+        f"# 更新时间（北京时间）：{update_time}",
+        f"# 原规则来源：{EASYLIST_URL}",
+        f"# 原规则版本：{version}",
+        f"# 原规则更新时间（北京时间）：{last_modified}",
         "",
     ]
 
