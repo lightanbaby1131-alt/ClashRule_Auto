@@ -4,7 +4,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import sys
 
-EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
+# 多规则源
+RULE_SOURCES = {
+    "EasyList": "https://easylist.to/easylist/easylist.txt",
+    "EasyPrivacy": "https://easylist.to/easylist/easyprivacy.txt",
+    "Fanboy Annoyance": "https://easylist-downloads.adblockplus.org/fanboy-annoyance.txt",
+    "Fanboy Social": "https://easylist-downloads.adblockplus.org/fanboy-social.txt",
+    "AdGuard Base": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+}
 
 CATEGORY_MAP = {
     "General": "通用广告",
@@ -45,7 +52,6 @@ def parse_header(text: str):
         if line.startswith("! Last modified:"):
             last_modified_raw = line.replace("! Last modified:", "").strip()
 
-    # 转换时间格式
     if last_modified_raw:
         try:
             dt_utc = datetime.strptime(last_modified_raw, "%d %b %Y %H:%M UTC")
@@ -59,23 +65,32 @@ def parse_header(text: str):
     return version, last_modified
 
 def convert(outfile: str):
-    print("Downloading EasyList...")
-    text = requests.get(EASYLIST_URL, timeout=30).text
-
-    version, last_modified = parse_header(text)
-
-    current_category = "通用广告"
     categorized = {
         "通用广告": set(),
         "追踪器": set(),
         "社交按钮": set(),
     }
 
-    for line in text.splitlines():
-        current_category = detect_category(line, current_category)
-        r = extract_domain(line)
-        if r:
-            categorized[current_category].add(r)
+    source_info = {}
+
+    for name, url in RULE_SOURCES.items():
+        print(f"Downloading {name}...")
+        text = requests.get(url, timeout=30).text
+
+        version, last_modified = parse_header(text)
+        source_info[name] = {
+            "url": url,
+            "version": version,
+            "last_modified": last_modified,
+        }
+
+        current_category = "通用广告"
+
+        for line in text.splitlines():
+            current_category = detect_category(line, current_category)
+            r = extract_domain(line)
+            if r:
+                categorized[current_category].add(r)
 
     total_rules = sum(len(v) for v in categorized.values())
 
@@ -83,14 +98,19 @@ def convert(outfile: str):
     update_time = now.strftime("%Y年%m月%d日 %H:%M")
 
     out_lines = [
-        "# 内容：广告拦截规则 EasyList",
-        f"# 数量：{total_rules} 条",
+        "# 内容：广告拦截规则（多源合并版）",
+        f"# 总数量：{total_rules} 条",
         f"# 更新时间（北京时间）：{update_time}",
-        f"# 原规则来源：{EASYLIST_URL}",
-        f"# 原规则版本：{version}",
-        f"# 原规则更新时间（北京时间）：{last_modified}",
         "",
+        "# 规则来源：",
     ]
+
+    for name, info in source_info.items():
+        out_lines.append(f"# - {name}")
+        out_lines.append(f"#   URL：{info['url']}")
+        out_lines.append(f"#   版本：{info['version']}")
+        out_lines.append(f"#   更新时间：{info['last_modified']}")
+        out_lines.append("#")
 
     for cat, rules in categorized.items():
         out_lines.append(f"# ===== {cat} =====")
@@ -103,8 +123,7 @@ def convert(outfile: str):
 
     print(f"Generated {outfile} with {total_rules} rules.")
 
-    # 固定 commit message
-    Path("commit_message.txt").write_text("Easylist广告拦截规则", encoding="utf-8")
+    Path("commit_message.txt").write_text("Easylist广告拦截规则（多源合并）", encoding="utf-8")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
