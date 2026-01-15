@@ -2,6 +2,7 @@ import re
 import requests
 from datetime import datetime, timedelta
 from pathlib import Path
+import sys
 
 EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
 
@@ -51,10 +52,8 @@ def convert(outfile: str):
         if r:
             categorized[current_category].add(r)
 
-    # 统计总数量
     total_rules = sum(len(v) for v in categorized.values())
 
-    # 更新时间（北京时间）
     now = datetime.utcnow() + timedelta(hours=8)
     update_time = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -70,8 +69,15 @@ def convert(outfile: str):
         out_lines.extend(sorted(rules))
         out_lines.append("")
 
-    Path(outfile).write_text("\n".join(out_lines), encoding="utf-8")
+    outfile_path = Path(outfile)
+    outfile_path.parent.mkdir(parents=True, exist_ok=True)
+    outfile_path.write_text("\n".join(out_lines), encoding="utf-8")
+
     print(f"Generated {outfile} with {total_rules} rules.")
 
 if __name__ == "__main__":
-    convert("easylist.list")
+    if len(sys.argv) < 2:
+        print("Usage: python convert_easylist.py <output_path>")
+        sys.exit(1)
+
+    convert(sys.argv[1])
