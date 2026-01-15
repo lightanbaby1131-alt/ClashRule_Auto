@@ -3,6 +3,8 @@
 
 import re
 import requests
+from datetime import datetime
+import os
 
 # -----------------------------
 # 1. 规则源定义
@@ -40,14 +42,11 @@ def extract_domains(text):
     for line in text.splitlines():
         line = line.strip()
 
-        # 跳过注释
         if not line or line.startswith("!") or line.startswith("#"):
             continue
 
-        # 去掉 hosts 格式
         line = re.sub(r"^(0\.0\.0\.0|127\.0\.0\.1)\s+", "", line)
 
-        # 匹配域名
         m = DOMAIN_RE.match(line)
         if m:
             domains.add(m.group(1).lower())
@@ -66,9 +65,33 @@ def download(url):
         return ""
 
 # -----------------------------
-# 4. 主流程：下载 → 提取 → 去重 → 生成文件
+# 4. 版本号管理
+# -----------------------------
+def load_version():
+    if not os.path.exists("version.txt"):
+        with open("version.txt", "w") as f:
+            f.write("1.0.0")
+        return "1.0.0"
+
+    with open("version.txt", "r") as f:
+        return f.read().strip()
+
+def bump_version(version):
+    major, minor, patch = map(int, version.split("."))
+    patch += 1
+    new_version = f"{major}.{minor}.{patch}"
+    with open("version.txt", "w") as f:
+        f.write(new_version)
+    return new_version
+
+# -----------------------------
+# 5. 主流程
 # -----------------------------
 def main():
+    version = load_version()
+    version = bump_version(version)
+    updated_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
     all_files_data = {}
 
     # 下载并处理每个规则文件
@@ -79,25 +102,22 @@ def main():
             domains |= extract_domains(text)
         all_files_data[filename] = domains
 
-    # -----------------------------
-    # 5. 文件之间相互去重
-    # -----------------------------
+    # 文件之间相互去重
     filenames = list(all_files_data.keys())
-
     for i in range(len(filenames)):
         for j in range(len(filenames)):
             if i != j:
                 all_files_data[filenames[i]] -= all_files_data[filenames[j]]
 
-    # -----------------------------
-    # 6. 写入最终 .list 文件
-    # -----------------------------
+    # 写入最终 .list 文件
     for filename, domains in all_files_data.items():
         with open(filename, "w", encoding="utf-8") as f:
+            f.write(f"# Version: {version}\n")
+            f.write(f"# Updated: {updated_time}\n\n")
             for d in sorted(domains):
                 f.write(d + "\n")
 
-    print("规则构建完成，共生成 5 个 .list 文件。")
+    print(f"规则构建完成，版本号 {version}，更新时间 {updated_time}")
 
 if __name__ == "__main__":
     main()
