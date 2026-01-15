@@ -5,7 +5,7 @@ import re
 from urllib.parse import urlparse
 
 # -----------------------------
-# 规则源定义
+# 规则源定义（AdGuard Mobile 已删除）
 # -----------------------------
 SOURCES = {
     "easylist_group": [
@@ -14,7 +14,6 @@ SOURCES = {
     ],
     "adguard_group": [
         ("AdGuard Base", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"),
-        ("AdGuard Mobile", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/mobile.txt"),
         ("AdGuard Tracking", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/tracking.txt"),
     ],
     "advertising_group": [
@@ -113,7 +112,7 @@ def main():
     for name, url in SOURCES["easylist_group"]:
         easylist_domains |= extract_domains_from_source(name, url)
 
-    # AdGuard 三个库
+    # AdGuard Base + Tracking
     for name, url in SOURCES["adguard_group"]:
         adguard_domains |= extract_domains_from_source(name, url)
 
@@ -145,7 +144,7 @@ def main():
         path.write_text("\n".join(header + rules), encoding="utf-8")
 
     write_list(OUTPUT_EASYLIST, "EasyList + ACL4SSR BanAD", easylist_domains)
-    write_list(OUTPUT_ADGUARD, "AdGuard Base + Mobile + Tracking", adguard_domains)
+    write_list(OUTPUT_ADGUARD, "AdGuard Base + Tracking", adguard_domains)
     write_list(OUTPUT_ADVERTISING, "Advertising", advertising_domains)
 
 
