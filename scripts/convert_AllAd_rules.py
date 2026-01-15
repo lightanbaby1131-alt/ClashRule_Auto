@@ -116,7 +116,7 @@ def main():
 
     all_files_data = {}
 
-    # 下载并处理每个规则文件
+    # 1）下载并处理每个规则文件
     for filename, urls in RULE_SOURCES.items():
         domains = set()
         for url in urls:
@@ -125,19 +125,20 @@ def main():
                 domains |= extract_domains(text)
 
         # 临时保存原始域名（可调试）
-        with open(os.path.join(TMP_DIR, filename + ".tmp"), "w", encoding="utf-8") as f:
+        tmp_path = os.path.join(TMP_DIR, filename + ".domains.tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
             for d in sorted(domains):
                 f.write(d + "\n")
 
         all_files_data[filename] = domains
 
-    # 文件之间相互去重（按优先级）
+    # 2）文件之间相互去重（按优先级）
     ordered_files = list(RULE_SOURCES.keys())
     for i, fname in enumerate(ordered_files):
         for prev_fname in ordered_files[:i]:
             all_files_data[fname] -= all_files_data[prev_fname]
 
-    # 写入最终 .list 文件
+    # 3）写入最终 Clash 可识别 .list 文件（DOMAIN-SUFFIX,xxx）
     for filename in ordered_files:
         domains = all_files_data[filename]
         description = FILE_DESCRIPTIONS.get(filename, "")
@@ -149,9 +150,9 @@ def main():
             f.write(f"# Description: {description}\n")
             f.write(f"# Version: {version}\n")
             f.write(f"# Updated: {updated_time}\n")
-            f.write("# Format: 一行一个域名，OpenClash 可识别。\n\n")
+            f.write("# Format: DOMAIN-SUFFIX,example.com\n\n")
             for d in sorted(domains):
-                f.write(d + "\n")
+                f.write(f"DOMAIN-SUFFIX,{d}\n")
 
     print("规则构建完成：")
     for fname in ordered_files:
