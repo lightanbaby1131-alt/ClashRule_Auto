@@ -6,7 +6,7 @@ import difflib
 EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
 
 # 最终输出文件
-OUTPUT = Path("rules/EasyList.list")
+OUTPUT = Path("Clash/Ruleset/AD/EasyList.list")
 
 # 临时文件目录（不会提交）
 TMP_DIR = Path(".github/tmp")
