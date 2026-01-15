@@ -91,7 +91,7 @@ def main():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 
     header = [
-        "# 内容：应用精华净化规则（自动合并 + 去重）",
+        "# 内容：应用广告净化规则（自动合并 + 去重）",
         f"# 总数量：{len(all_domains)} 条",
         f"# 更新时间（北京时间）：{now_bj()}",
         "",
