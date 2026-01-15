@@ -5,7 +5,7 @@ permissions:
 
 on:
   schedule:
-    - cron: "0 22 * * *"   # 中国时间 06:00
+    - cron: "0 20 * * *"   # 中国时间 04:00
   workflow_dispatch:
 
 jobs:
@@ -34,5 +34,5 @@ jobs:
 
           git add Clash/Ruleset/AD/*.list .github/tmp/version.txt
 
-          git commit -m "自动更新 Clash 规则文件（AdGuard / Advertising / AppPurify / EasyList / BanEasyPrivacy）" || exit 0
+          git commit -m "广告拦截规则自动更新" || exit 0
           git push || exit 0
