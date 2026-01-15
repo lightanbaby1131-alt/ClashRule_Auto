@@ -112,7 +112,8 @@ def convert(outfile: str):
     Path("advertising_added.txt").write_text("\n".join(sorted(added)), encoding="utf-8")
     Path("advertising_removed.txt").write_text("\n".join(sorted(removed)), encoding="utf-8")
 
-    commit_msg = f"Advertising合并规则（新增 {added_count}，删除 {removed_count}）"
+    # 固定提交信息
+    commit_msg = "advertising_merge整合版广告拦截规则"
     Path("commit_message_advertising.txt").write_text(commit_msg, encoding="utf-8")
 
 if __name__ == "__main__":
