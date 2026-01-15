@@ -3,7 +3,7 @@ name: Build Rule Lists
 on:
   schedule:
     - cron: "0 0 * * *"   # 每天自动构建
-  workflow_dispatch:       # 手动触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -29,12 +29,7 @@ jobs:
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions"
 
-          git add *.list
+          git add *.list version.txt
 
-          git commit -m "更新规则文件：AdGuard广告拦截规则" || true
-          git commit -m "更新规则文件：Advertising广告拦截规则" || true
-          git commit -m "更新规则文件：应用净化规则" || true
-          git commit -m "更新规则文件：EasyList广告规则" || true
-          git commit -m "更新规则文件：隐私防护规则" || true
-
+          git commit -m "更新规则文件与版本号" || true
           git push || true
