@@ -97,14 +97,14 @@ def merge_rules(all_rules_list):
 def build_header(now_cn, source_updates, total_count):
     """
     生成文件头部注释：
-    - EasyList.list广告拦截规则
+    - BanAD.list广告拦截规则
     - 更新时间（北京时间）
     - 原规则来源
     - 原规则更新时间（有几个写几个）
     - 规则总数量
     """
     lines = []
-    lines.append("# EasyList.list广告拦截规则")
+    lines.append("# BanAD.list广告拦截规则")
     lines.append(f"# 更新时间：{now_cn.strftime('%Y年%m月%d日 %H:%M')}（北京时间）")
     lines.append("# 原规则来源：")
     for name, url in SOURCES.items():
