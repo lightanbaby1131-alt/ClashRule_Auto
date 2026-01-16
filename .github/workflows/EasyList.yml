@@ -3,8 +3,8 @@ name: EasyList
 on:
   schedule:
     # 每天 01:02（UTC）自动运行
-    # 如果你希望是洛杉矶时间 01:02，需要自行换算为 UTC
-    - cron: "2 1 * * *"
+    # 如果你希望是北京时间 02:02，需要自行换算为 UTC
+    - cron: "2 18 * * *"
   workflow_dispatch:
 
 permissions:
