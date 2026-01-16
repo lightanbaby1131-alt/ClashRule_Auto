@@ -9,7 +9,7 @@ from datetime import datetime
 import requests
 
 try:
-    from zoneinfo import ZoneInfo  # Python 3.9+
+    from zoneinfo import ZoneInfo
 except ImportError:
     from backports.zoneinfo import ZoneInfo  # type: ignore
 
@@ -17,7 +17,6 @@ except ImportError:
 AD_SOURCE_URL = "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/Advertising/Advertising.list"
 BANAD_URL = "https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/BanAD.list"
 
-# 仓库路径
 TMP_DIR = Path(".github/tmp")
 OUTPUT_DIR = Path("Clash/Ruleset/AD")
 OUTPUT_FILE = OUTPUT_DIR / "Advertising.list"
@@ -41,27 +40,41 @@ def download_file(url: str, dest: Path) -> None:
     dest.write_bytes(resp.content)
 
 
-def extract_updated_time(path: Path) -> str:
+def extract_updated_time_advertising(path: Path) -> str:
     """
-    从源文件中提取 "# UPDATED: 2026-01-16 02:08:37"
-    并转换为 "2026年01月16日 02:08"
+    从 Advertising.list 中提取 "# UPDATED: YYYY-MM-DD HH:MM:SS"
+    转换为 "YYYY年MM月DD日 HH:MM（北京时间）"
     """
     updated_raw = None
 
     with path.open("r", encoding="utf-8", errors="ignore") as f:
         for line in f:
-            if line.startswith("# UPDATED:"):
-                updated_raw = line.replace("# UPDATED:", "").strip()
+            if "UPDATED:" in line:
+                updated_raw = line.split("UPDATED:", 1)[1].strip()
                 break
 
     if not updated_raw:
-        return "未知"
+        return "未知（北京时间）"
 
     try:
         dt = datetime.strptime(updated_raw, "%Y-%m-%d %H:%M:%S")
-        return dt.strftime("%Y年%m月%d日 %H:%M")
+        return dt.strftime("%Y年%m月%d日 %H:%M（北京时间）")
     except Exception:
-        return updated_raw
+        return updated_raw + "（北京时间）"
+
+
+def extract_updated_time_banad(path: Path) -> str:
+    """
+    从 BanAD.list 中提取：
+    "# 更新时间：2026年01月16日 12:51（北京时间）"
+    """
+    with path.open("r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            if "更新时间" in line and "北京时间" in line:
+                # 直接返回整段格式
+                return line.replace("#", "").replace("更新时间：", "").strip()
+
+    return "未知（北京时间）"
 
 
 def parse_rules(path: Path) -> list[str]:
@@ -92,27 +105,28 @@ def group_rules_by_type(rules: list[str]) -> dict[str, list[str]]:
     return grouped
 
 
-def build_header(rule_count: int, source_update_time: str) -> str:
+def build_header(rule_count: int, ad_update: str, banad_update: str) -> str:
     now_cn = datetime.now(ZoneInfo("Asia/Shanghai"))
-    update_time_str = now_cn.strftime("%Y年%m月%d日 %H:%M")
+    update_time_str = now_cn.strftime("%Y年%m月%d日 %H:%M（北京时间）")
 
     header_lines = [
         "# Advertising广告拦截规则",
-        f"# 更新时间: {update_time_str}（北京时间）",
-        "# 原规则来源:",
+        f"# 更新时间：{update_time_str}",
+        "# 原规则来源：",
         f"#   1. {AD_SOURCE_URL}",
-        f"#   2. 去重排除源: {BANAD_URL}",
-        "# 原规则更新时间:",
-        f"#   1. {source_update_time}",
-        f"# 规则总数量: {rule_count}",
+        f"#   2. 去重排除源：{BANAD_URL}",
+        "# 原规则更新时间：",
+        f"#   Advertising源：{ad_update}",
+        f"#   BanAD源：{banad_update}",
+        f"# 规则总数量：{rule_count}",
         "",
     ]
     return "\n".join(header_lines)
 
 
-def write_output_file(rules: list[str], source_update_time: str) -> None:
+def write_output_file(rules: list[str], ad_update: str, banad_update: str) -> None:
     grouped = group_rules_by_type(rules)
-    header = build_header(len(rules), source_update_time)
+    header = build_header(len(rules), ad_update, banad_update)
 
     lines: list[str] = [header]
 
@@ -168,7 +182,9 @@ def main():
         download_file(AD_SOURCE_URL, ad_tmp)
         download_file(BANAD_URL, banad_tmp)
 
-        source_update_time = extract_updated_time(ad_tmp)
+        # 提取两个源的更新时间
+        ad_update = extract_updated_time_advertising(ad_tmp)
+        banad_update = extract_updated_time_banad(banad_tmp)
 
         ad_rules = parse_rules(ad_tmp)
         banad_rules = set(parse_rules(banad_tmp))
@@ -182,7 +198,7 @@ def main():
                 seen.add(r)
                 final_rules.append(r)
 
-        write_output_file(final_rules, source_update_time)
+        write_output_file(final_rules, ad_update, banad_update)
 
     finally:
         clean_tmp_dir()
