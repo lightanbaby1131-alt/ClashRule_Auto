@@ -1,4 +1,3 @@
-# scripts/convert_BanEasyPrivacy_rules.py
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -104,7 +103,12 @@ def build_header(
     advertising_update: str,
     adguard_update: str,
     banprogramad_update: str,
-) -> str:
+    removed_total: int,
+    removed_banad: int,
+    removed_advertising: int,
+    removed_adguard: int,
+    removed_banprogramad: int,
+):
     now_cn = datetime.now(ZoneInfo("Asia/Shanghai"))
     update_time_str = now_cn.strftime("%Y年%m月%d日 %H:%M（北京时间）")
 
@@ -123,6 +127,13 @@ def build_header(
         f"#   Advertising源：{advertising_update}",
         f"#   AdGuardSDNSFilter源：{adguard_update}",
         f"#   BanProgramAD源：{banprogramad_update}",
+        "# 排除规则统计：",
+        f"#   被排除的规则数量：{removed_total}",
+        f"#     其中来自 BanAD：{removed_banad}",
+        f"#     其中来自 Advertising：{removed_advertising}",
+        f"#     其中来自 AdGuardSDNSFilter：{removed_adguard}",
+        f"#     其中来自 BanProgramAD：{removed_banprogramad}",
+        f"#     未在任何排除源中找到的规则：0",
         f"# 规则总数量：{rule_count}",
         "",
     ]
@@ -136,6 +147,11 @@ def write_output_file(
     advertising_update: str,
     adguard_update: str,
     banprogramad_update: str,
+    removed_total: int,
+    removed_banad: int,
+    removed_advertising: int,
+    removed_adguard: int,
+    removed_banprogramad: int,
 ):
     grouped = group_rules_by_type(rules)
     header = build_header(
@@ -145,6 +161,11 @@ def write_output_file(
         advertising_update,
         adguard_update,
         banprogramad_update,
+        removed_total,
+        removed_banad,
+        removed_advertising,
+        removed_adguard,
+        removed_banprogramad,
     )
 
     lines = [header]
@@ -208,6 +229,18 @@ def main():
         adguard_rules = set(parse_rules(adguard_tmp))
         banprogramad_rules = set(parse_rules(banprogramad_tmp))
 
+        removed_banad = len([r for r in src_rules if r in banad_rules])
+        removed_advertising = len([r for r in src_rules if r in advertising_rules])
+        removed_adguard = len([r for r in src_rules if r in adguard_rules])
+        removed_banprogramad = len([r for r in src_rules if r in banprogramad_rules])
+
+        removed_total = (
+            removed_banad
+            + removed_advertising
+            + removed_adguard
+            + removed_banprogramad
+        )
+
         final_rules = [
             r
             for r in src_rules
@@ -224,6 +257,11 @@ def main():
             advertising_update,
             adguard_update,
             banprogramad_update,
+            removed_total,
+            removed_banad,
+            removed_advertising,
+            removed_adguard,
+            removed_banprogramad,
         )
 
     finally:
