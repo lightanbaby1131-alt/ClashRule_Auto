@@ -1,11 +1,9 @@
-# scripts/convert_BanProgramAD_rules.py
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import shutil
 from pathlib import Path
 from datetime import datetime
-
 import requests
 
 try:
@@ -36,18 +34,14 @@ def ensure_dirs():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def download_file(url: str, dest: Path) -> None:
+def download_file(url: str, dest: Path):
     resp = requests.get(url, timeout=30)
     resp.raise_for_status()
     dest.write_bytes(resp.content)
 
 
 def extract_updated_time_acl_style(path: Path) -> str:
-    """
-    从 ACL4SSR 风格文件中提取：
-    "# 更新时间：2026年01月16日 12:51（北京时间）"
-    返回 "2026年01月16日 12:51（北京时间）"
-    """
+    """提取 ACL4SSR 风格的更新时间"""
     with path.open("r", encoding="utf-8", errors="ignore") as f:
         for line in f:
             if "更新时间" in line and "北京时间" in line:
@@ -58,15 +52,11 @@ def extract_updated_time_acl_style(path: Path) -> str:
 
 
 def parse_rules(path: Path) -> list[str]:
-    """
-    解析规则，只保留 OpenClash 可识别的域名类规则，
-    并尽量避免 IP 形式的“域名”以降低误杀风险。
-    """
-    rules: list[str] = []
+    """解析规则，只保留 OpenClash 可识别的域名规则，并避免纯 IP"""
+    rules = []
     seen = set()
 
     def is_probably_domain(s: str) -> bool:
-        # 过滤纯 IP（只含数字和点），保留包含字母或连字符的
         s = s.strip()
         if not s:
             return False
@@ -79,7 +69,6 @@ def parse_rules(path: Path) -> list[str]:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-
             if not line.startswith(ALLOWED_PREFIXES):
                 continue
 
@@ -99,7 +88,7 @@ def parse_rules(path: Path) -> list[str]:
 
 
 def group_rules_by_type(rules: list[str]) -> dict[str, list[str]]:
-    grouped: dict[str, list[str]] = {}
+    grouped = {}
     for r in rules:
         rule_type = r.split(",", 1)[0].strip()
         grouped.setdefault(rule_type, []).append(r)
@@ -112,11 +101,15 @@ def build_header(
     banad_update: str,
     advertising_update: str,
     adguard_update: str,
-) -> str:
+    removed_total: int,
+    removed_banad: int,
+    removed_advertising: int,
+    removed_adguard: int,
+):
     now_cn = datetime.now(ZoneInfo("Asia/Shanghai"))
     update_time_str = now_cn.strftime("%Y年%m月%d日 %H:%M（北京时间）")
 
-    header_lines = [
+    header = [
         "# BanProgramAD广告拦截规则",
         f"# 更新时间：{update_time_str}",
         "# 原规则来源：",
@@ -129,10 +122,16 @@ def build_header(
         f"#   BanAD源：{banad_update}",
         f"#   Advertising源：{advertising_update}",
         f"#   AdGuardSDNSFilter源：{adguard_update}",
+        "# 排除规则统计：",
+        f"#   被排除的规则数量：{removed_total}",
+        f"#     其中来自 BanAD：{removed_banad}",
+        f"#     其中来自 Advertising：{removed_advertising}",
+        f"#     其中来自 AdGuardSDNSFilter：{removed_adguard}",
+        f"#     未在任何排除源中找到的规则：0",
         f"# 规则总数量：{rule_count}",
         "",
     ]
-    return "\n".join(header_lines)
+    return "\n".join(header)
 
 
 def write_output_file(
@@ -141,51 +140,56 @@ def write_output_file(
     banad_update: str,
     advertising_update: str,
     adguard_update: str,
-) -> None:
+    removed_total: int,
+    removed_banad: int,
+    removed_advertising: int,
+    removed_adguard: int,
+):
     grouped = group_rules_by_type(rules)
-    header = build_header(len(rules), src_update, banad_update, advertising_update, adguard_update)
 
-    lines: list[str] = [header]
+    header = build_header(
+        len(rules),
+        src_update,
+        banad_update,
+        advertising_update,
+        adguard_update,
+        removed_total,
+        removed_banad,
+        removed_advertising,
+        removed_adguard,
+    )
 
-    type_order = [
-        "DOMAIN-SUFFIX",
-        "DOMAIN",
-        "DOMAIN-KEYWORD",
-        "DOMAIN-REGEX",
-    ]
-    used_types = set()
+    lines = [header]
+
+    type_order = ["DOMAIN-SUFFIX", "DOMAIN", "DOMAIN-KEYWORD", "DOMAIN-REGEX"]
+    used = set()
 
     for t in type_order:
         if t in grouped:
-            used_types.add(t)
+            used.add(t)
             lines.append(f"# === {t} 规则 ===")
             lines.extend(grouped[t])
             lines.append("")
 
     for t, rs in grouped.items():
-        if t in used_types:
-            continue
-        lines.append(f"# === {t} 规则 ===")
-        lines.extend(rs)
-        lines.append("")
+        if t not in used:
+            lines.append(f"# === {t} 规则 ===")
+            lines.extend(rs)
+            lines.append("")
 
-    content = "\n".join(lines).rstrip() + "\n"
-    OUTPUT_FILE.write_text(content, encoding="utf-8")
+    OUTPUT_FILE.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def clean_tmp_dir():
     if TMP_DIR.exists():
         for child in TMP_DIR.iterdir():
-            if child.is_file() or child.is_symlink():
-                try:
+            try:
+                if child.is_file():
                     child.unlink()
-                except OSError:
-                    pass
-            elif child.is_dir():
-                try:
+                else:
                     shutil.rmtree(child)
-                except OSError:
-                    pass
+            except:
+                pass
 
 
 def main():
@@ -212,22 +216,30 @@ def main():
         advertising_rules = set(parse_rules(advertising_tmp))
         adguard_rules = set(parse_rules(adguard_tmp))
 
-        filtered_rules = [
-            r
-            for r in src_rules
+        removed_banad = len([r for r in src_rules if r in banad_rules])
+        removed_advertising = len([r for r in src_rules if r in advertising_rules])
+        removed_adguard = len([r for r in src_rules if r in adguard_rules])
+
+        removed_total = removed_banad + removed_advertising + removed_adguard
+
+        final_rules = [
+            r for r in src_rules
             if r not in banad_rules
             and r not in advertising_rules
             and r not in adguard_rules
         ]
 
-        seen = set()
-        final_rules: list[str] = []
-        for r in filtered_rules:
-            if r not in seen:
-                seen.add(r)
-                final_rules.append(r)
-
-        write_output_file(final_rules, src_update, banad_update, advertising_update, adguard_update)
+        write_output_file(
+            final_rules,
+            src_update,
+            banad_update,
+            advertising_update,
+            adguard_update,
+            removed_total,
+            removed_banad,
+            removed_advertising,
+            removed_adguard,
+        )
 
     finally:
         clean_tmp_dir()
