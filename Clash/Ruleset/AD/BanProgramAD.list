@@ -1,0 +1,141 @@
+# BanProgramAD广告拦截规则
+# 更新时间：2026年01月16日 17:28（北京时间）
+# 原规则来源：
+#   1. BanProgramAD源：https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanProgramAD.list
+#   2. 去重排除源一（BanAD）：https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/BanAD.list
+#   3. 去重排除源二（Advertising）：https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/Advertising.list
+#   4. 去重排除源三（AdGuardSDNSFilter）：https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/AdGuardSDNSFilter.list
+# 原规则更新时间：
+#   BanProgramAD源：未知（北京时间）
+#   BanAD源：2026年01月16日 12:51（北京时间）
+#   Advertising源：2026年01月16日 13:12（北京时间）
+#   AdGuardSDNSFilter源：2026年01月16日 13:19（北京时间）
+# 规则总数量：124
+
+# === DOMAIN-SUFFIX 规则 ===
+DOMAIN-SUFFIX,analytics.wanmei.com
+DOMAIN-SUFFIX,gg.stargame.com
+DOMAIN-SUFFIX,dl.2345.cn
+DOMAIN-SUFFIX,download.2345.cn
+DOMAIN-SUFFIX,houtai.2345.cn
+DOMAIN-SUFFIX,jifen.2345.cn
+DOMAIN-SUFFIX,jifendownload.2345.cn
+DOMAIN-SUFFIX,minipage.2345.cn
+DOMAIN-SUFFIX,wan.2345.cn
+DOMAIN-SUFFIX,zhushou.2345.cn
+DOMAIN-SUFFIX,lianmeng.360.cn
+DOMAIN-SUFFIX,shouji.360.cn
+DOMAIN-SUFFIX,show.re.taobao.com
+DOMAIN-SUFFIX,adserver.unityads.unity3d.com
+DOMAIN-SUFFIX,adproxy.autohome.com.cn
+DOMAIN-SUFFIX,applogapi.autohome.com.cn
+DOMAIN-SUFFIX,click.hm.baidu.com
+DOMAIN-SUFFIX,fc-.cdn.bcebos.com
+DOMAIN-SUFFIX,res.limei.com
+DOMAIN-SUFFIX,rigel.baidustatic.com
+DOMAIN-SUFFIX,tob-cms.bj.bcebos.com
+DOMAIN-SUFFIX,ubmcmm.baidustatic.com
+DOMAIN-SUFFIX,vv84.bj.bcebos.com
+DOMAIN-SUFFIX,wenku-cms.bj.bcebos.com
+DOMAIN-SUFFIX,zzy1.quyaoya.com
+DOMAIN-SUFFIX,adm.ps.easou.com
+DOMAIN-SUFFIX,api.itaoxiaoshuo.com
+DOMAIN-SUFFIX,assets.ps.easou.com
+DOMAIN-SUFFIX,e.v02u9.cn
+DOMAIN-SUFFIX,jyd.fjzdmy.com
+DOMAIN-SUFFIX,m.ourlj.com
+DOMAIN-SUFFIX,m.txtxr.com
+DOMAIN-SUFFIX,m.vsxet.com
+DOMAIN-SUFFIX,p.vq6nsu.cn
+DOMAIN-SUFFIX,sdk.cferw.com
+DOMAIN-SUFFIX,tjlog.ps.easou.com
+DOMAIN-SUFFIX,ut2.shuqistat.com
+DOMAIN-SUFFIX,xpe.cxaerp.com
+DOMAIN-SUFFIX,ad.toutiao.com
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com
+DOMAIN-SUFFIX,policy.jd.com
+DOMAIN-SUFFIX,adsfile.bssdlbig.kugou.com
+DOMAIN-SUFFIX,apk.shouji.koowo.com
+DOMAIN-SUFFIX,g.koowo.com
+DOMAIN-SUFFIX,log.kuwo.cn
+DOMAIN-SUFFIX,mobilead.kuwo.cn
+DOMAIN-SUFFIX,dc.meitustat.com
+DOMAIN-SUFFIX,mdc.meitustat.com
+DOMAIN-SUFFIX,rabbit.meitustat.com
+DOMAIN-SUFFIX,rabbit.tg.meitu.com
+DOMAIN-SUFFIX,ad.api.moji.com
+DOMAIN-SUFFIX,fds.api.moji.com
+DOMAIN-SUFFIX,wbapp.uve.weibo.com
+DOMAIN-SUFFIX,analytics.twitter.com
+DOMAIN-SUFFIX,huichuan.sm.cn
+DOMAIN-SUFFIX,log.cs.pp.cn
+DOMAIN-SUFFIX,m.uczzd.cn
+DOMAIN-SUFFIX,server.m.pp.cn
+DOMAIN-SUFFIX,u.uc123.com
+DOMAIN-SUFFIX,u.ucfly.com
+DOMAIN-SUFFIX,c.51y5.net
+DOMAIN-SUFFIX,cdsget.51y5.net
+DOMAIN-SUFFIX,news-imgpb.51y5.net
+DOMAIN-SUFFIX,wifiapidd.51y5.net
+DOMAIN-SUFFIX,wkanc.51y5.net
+DOMAIN-SUFFIX,logic.cpm.cm.kankan.com
+DOMAIN-SUFFIX,ads.yahoo.com
+DOMAIN-SUFFIX,adss.yahoo.com
+DOMAIN-SUFFIX,clicks.beap.bc.yahoo.com
+DOMAIN-SUFFIX,comet.yahoo.com
+DOMAIN-SUFFIX,doubleplay-conf-yql.media.yahoo.com
+DOMAIN-SUFFIX,gemini.yahoo.com
+DOMAIN-SUFFIX,js-apac-ss.ysm.yahoo.com
+DOMAIN-SUFFIX,locdrop.query.yahoo.com
+DOMAIN-SUFFIX,onepush.query.yahoo.com
+DOMAIN-SUFFIX,p3p.yahoo.com
+DOMAIN-SUFFIX,partnerads.ysm.yahoo.com
+DOMAIN-SUFFIX,ws.progrss.yahoo.com
+DOMAIN-SUFFIX,ybp.yahoo.com
+DOMAIN-SUFFIX,iis3g.deliver.ifeng.com
+DOMAIN-SUFFIX,mfp.deliver.ifeng.com
+DOMAIN-SUFFIX,cupid.iqiyi.com
+DOMAIN-SUFFIX,pq.stat.ku6.com
+DOMAIN-SUFFIX,static.ku6.com
+DOMAIN-SUFFIX,log.v2.hunantv.com
+DOMAIN-SUFFIX,pv.sohu.com
+DOMAIN-SUFFIX,c.l.qq.com
+DOMAIN-SUFFIX,livep.l.qq.com
+DOMAIN-SUFFIX,lives.l.qq.com
+DOMAIN-SUFFIX,livew.l.qq.com
+DOMAIN-SUFFIX,omgmta1.qq.com
+DOMAIN-SUFFIX,p.l.qq.com
+DOMAIN-SUFFIX,t.l.qq.com
+DOMAIN-SUFFIX,u.l.qq.com
+DOMAIN-SUFFIX,p.l.ykimg.com
+DOMAIN-SUFFIX,p.l.youku.com
+DOMAIN-SUFFIX,r.l.youku.com
+DOMAIN-SUFFIX,v.l.youku.com
+DOMAIN-SUFFIX,ehg-youtube.hitbox.com
+DOMAIN-SUFFIX,ssl-youtube.2cnt.net
+DOMAIN-SUFFIX,youtube.112.2o7.net
+DOMAIN-SUFFIX,youtube.2cnt.net
+DOMAIN-SUFFIX,c.algovid.com
+DOMAIN-SUFFIX,kwflvcdn.000dn.com
+DOMAIN-SUFFIX,match.rtbidder.net
+DOMAIN-SUFFIX,t.cr-nielsen.com
+DOMAIN-SUFFIX,ad.unimhk.com
+DOMAIN-SUFFIX,ads.genieessp.com
+DOMAIN-SUFFIX,advert.api.thejoyrun.com
+DOMAIN-SUFFIX,analytics.ganji.com
+DOMAIN-SUFFIX,e.nexac.com
+DOMAIN-SUFFIX,hosting.miarroba.info
+DOMAIN-SUFFIX,image.gentags.com
+DOMAIN-SUFFIX,log.outbrain.com
+DOMAIN-SUFFIX,m.12306media.com
+
+# === DOMAIN 规则 ===
+DOMAIN,adsmind.gdtimg.com
+DOMAIN,adsmind.tc.qq.com
+DOMAIN,pgdt.gtimg.cn
+DOMAIN,pgdt.gtimg.com
+DOMAIN,pgdt.ugdtimg.com
+DOMAIN,splashqqlive.gtimg.com
+DOMAIN,wa.gtimg.com
+DOMAIN,wxsnsdy.wxs.qq.com
+DOMAIN,wxsnsdythumb.wxs.qq.com
