@@ -40,7 +40,6 @@ def fetch_source(name, url):
         l = line.strip()
         if not l.startswith("#"):
             continue
-        # 常见格式尝试匹配
         if "Last Modified" in l or "Last Update" in l or "更新时间" in l:
             last_update = l.lstrip("#").strip()
             break
@@ -63,7 +62,6 @@ def parse_rules_from_file(path):
             if not line or line.startswith("#"):
                 continue
 
-            # 只保留标准三种前缀
             if line.startswith(valid_prefixes):
                 parts = line.split(",", 1)
                 if len(parts) != 2:
@@ -72,7 +70,7 @@ def parse_rules_from_file(path):
                 if not value:
                     continue
 
-                # 简单过滤明显非域名/关键字的内容，降低误杀
+                # 简单过滤明显非域名/关键字的内容
                 if "://" in value or "/" in value or " " in value:
                     continue
 
@@ -97,14 +95,14 @@ def merge_rules(all_rules_list):
 def build_header(now_cn, source_updates, total_count):
     """
     生成文件头部注释：
-    - BanAD.list广告拦截规则
+    - BanAD广告拦截规则
     - 更新时间（北京时间）
     - 原规则来源
     - 原规则更新时间（有几个写几个）
     - 规则总数量
     """
     lines = []
-    lines.append("# BanAD.list广告拦截规则")
+    lines.append("# BanAD广告拦截规则")
     lines.append(f"# 更新时间：{now_cn.strftime('%Y年%m月%d日 %H:%M')}（北京时间）")
     lines.append("# 原规则来源：")
     for name, url in SOURCES.items():
@@ -118,20 +116,16 @@ def build_header(now_cn, source_updates, total_count):
             lines.append(f"#   {name}: 未提供")
 
     lines.append(f"# 规则总数量：{total_count}")
-    lines.append("")  # 空行分隔
+    lines.append("")
     return "\n".join(lines)
 
 
 def write_output(merged_rules, source_updates):
-    # 统计总数量
     total_count = sum(len(v) for v in merged_rules.values())
-
-    # 当前北京时间
     now_cn = datetime.now(ZoneInfo("Asia/Shanghai"))
 
     header = build_header(now_cn, source_updates, total_count)
 
-    # 尽量提高可读性：按类型分块 + 排序
     lines = [header]
 
     if merged_rules["DOMAIN-SUFFIX"]:
@@ -183,7 +177,6 @@ def main():
         merged = merge_rules(all_rules)
         write_output(merged, source_updates)
     finally:
-        # 无论成功与否都尝试清理临时文件
         cleanup_tmp()
 
 
