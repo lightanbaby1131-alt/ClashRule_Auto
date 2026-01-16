@@ -1,0 +1,49 @@
+name: EasyList
+
+on:
+  schedule:
+    # 每天 01:02（UTC）自动运行
+    # 如果你希望是洛杉矶时间 01:02，需要自行换算为 UTC
+    - cron: "2 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Prepare directories
+        run: |
+          mkdir -p .github/tmp
+          mkdir -p Clash/Ruleset/AD
+          mkdir -p scripts
+
+      - name: Run EasyList converter
+        run: |
+          python scripts/convert_EasyList_rules.py
+
+      - name: Commit and push EasyList.list
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add Clash/Ruleset/AD/EasyList.list
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "EasyList.list广告拦截规则"
+          git push
