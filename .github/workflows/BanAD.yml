@@ -3,8 +3,7 @@ name: BanAD
 on:
   schedule:
     # 每天北京时间 01:05（Asia/Shanghai）
-    - cron: "5 1 * * *"
-      timezone: Asia/Shanghai
+    - cron: "5 17 * * *"
   workflow_dispatch:
 
 permissions:
