@@ -43,6 +43,8 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add Clash/Ruleset/AD/Advertising.list
             git commit -m "Advertising广告拦截规则"
+            # 保证工作区干净，避免 rebase 报错
+            git reset --hard
             git pull --rebase
             git push
           fi
