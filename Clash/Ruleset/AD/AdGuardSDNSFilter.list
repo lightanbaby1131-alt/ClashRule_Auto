@@ -1,14 +1,14 @@
 # AdGuardSDNSFilter广告拦截规则
-# 更新时间：2026年06月09日 03:33（北京时间）
+# 更新时间：2026年06月11日 03:43（北京时间）
 # 原规则来源：
 #   1. AdGuardSDNSFilter源：https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter.list
 #   2. 去重排除源一（BanAD）：https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/BanAD.list
 #   3. 去重排除源二（Advertising）：https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/Advertising.list
 # 原规则更新时间：
 #   AdGuardSDNSFilter源：2025年06月06日 09:18（北京时间）
-#   BanAD源：2026年06月09日 03:30（北京时间）
-#   Advertising源：2026年06月08日 02:17（北京时间）
-# 规则总数量：26770
+#   BanAD源：2026年06月11日 03:42（北京时间）
+#   Advertising源：2026年06月10日 03:28（北京时间）
+# 规则总数量：26777
 
 # === DOMAIN-SUFFIX 规则 ===
 DOMAIN-SUFFIX,0.101tubeporn.com
@@ -8041,6 +8041,7 @@ DOMAIN-SUFFIX,fe158168fc.com
 DOMAIN-SUFFIX,fe9dc503.xyz
 DOMAIN-SUFFIX,fearjav11.fun
 DOMAIN-SUFFIX,feastfirefly.shop
+DOMAIN-SUFFIX,featureassets.org
 DOMAIN-SUFFIX,featuremedicine.com
 DOMAIN-SUFFIX,fecguzhzeia.vip
 DOMAIN-SUFFIX,fedra.info
@@ -11749,6 +11750,7 @@ DOMAIN-SUFFIX,js.hs-banner.com
 DOMAIN-SUFFIX,js.hsleadflows.net
 DOMAIN-SUFFIX,js.jianbaimei.com
 DOMAIN-SUFFIX,js.mangajp.top
+DOMAIN-SUFFIX,js.onclckvd.com
 DOMAIN-SUFFIX,js.ptengine.jp
 DOMAIN-SUFFIX,js.rush-member.com
 DOMAIN-SUFFIX,js.spreton.com
@@ -18560,6 +18562,7 @@ DOMAIN-SUFFIX,rt.usafuneralexpenses.com
 DOMAIN-SUFFIX,rtb-apac-v4.broadadx.com
 DOMAIN-SUFFIX,rtb-apac-v4.pubsfusion.com
 DOMAIN-SUFFIX,rtb-apac.adcannyads.com
+DOMAIN-SUFFIX,rtb-apac.adokutrtb.com
 DOMAIN-SUFFIX,rtb-apac.boffoadsapi.com
 DOMAIN-SUFFIX,rtb-apac.broadadx.com
 DOMAIN-SUFFIX,rtb-apac.rtbflairads.com
@@ -18569,6 +18572,7 @@ DOMAIN-SUFFIX,rtb-eu-v4.pubsfusion.com
 DOMAIN-SUFFIX,rtb-eu.adapace.com
 DOMAIN-SUFFIX,rtb-eu.adcannyads.com
 DOMAIN-SUFFIX,rtb-eu.admidadsp.com
+DOMAIN-SUFFIX,rtb-eu.adokutrtb.com
 DOMAIN-SUFFIX,rtb-eu.adsimilate.com
 DOMAIN-SUFFIX,rtb-eu.boffoadsapi.com
 DOMAIN-SUFFIX,rtb-eu.epikads.com
@@ -18595,6 +18599,7 @@ DOMAIN-SUFFIX,rtb-useast-v4.ras-trk.com
 DOMAIN-SUFFIX,rtb-useast-v4.xeloop.com
 DOMAIN-SUFFIX,rtb-useast.adcannyads.com
 DOMAIN-SUFFIX,rtb-useast.admidadsp.com
+DOMAIN-SUFFIX,rtb-useast.adokutrtb.com
 DOMAIN-SUFFIX,rtb-useast.adsfloow.net
 DOMAIN-SUFFIX,rtb-useast.adzealous.com
 DOMAIN-SUFFIX,rtb-useast.agilitydigitalmedia.com
@@ -18611,6 +18616,7 @@ DOMAIN-SUFFIX,rtb-useast.rtbflairads.com
 DOMAIN-SUFFIX,rtb-useast.vyadd.com
 DOMAIN-SUFFIX,rtb-uswest-v4.infinityexplorers.com
 DOMAIN-SUFFIX,rtb-uswest.admidadsp.com
+DOMAIN-SUFFIX,rtb-uswest.adokutrtb.com
 DOMAIN-SUFFIX,rtb-uswest.adsimilate.com
 DOMAIN-SUFFIX,rtb-uswest.audience.media
 DOMAIN-SUFFIX,rtb-uswest.boffoadsapi.com
@@ -21867,6 +21873,7 @@ DOMAIN-SUFFIX,static-rtb2.mediarise.io
 DOMAIN-SUFFIX,static-rtb2.torchad.com
 DOMAIN-SUFFIX,static.ad.iadxchange.com
 DOMAIN-SUFFIX,static.adflores.com
+DOMAIN-SUFFIX,static.adokutrtb.com
 DOMAIN-SUFFIX,static.adportonic.com
 DOMAIN-SUFFIX,static.adprudence.com
 DOMAIN-SUFFIX,static.adservtday.com
