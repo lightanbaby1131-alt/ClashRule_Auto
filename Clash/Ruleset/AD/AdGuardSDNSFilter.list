@@ -1,14 +1,14 @@
 # AdGuardSDNSFilter广告拦截规则
-# 更新时间：2026年10月17日 03:55（北京时间）
+# 更新时间：2026年10月18日 03:19（北京时间）
 # 原规则来源：
 #   1. AdGuardSDNSFilter源：https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/refs/heads/master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter.list
 #   2. 去重排除源一（BanAD）：https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/BanAD.list
 #   3. 去重排除源二（Advertising）：https://raw.githubusercontent.com/lightanbaby1131-alt/ClashRule_Auto/refs/heads/main/Clash/Ruleset/AD/Advertising.list
 # 原规则更新时间：
 #   AdGuardSDNSFilter源：2025年06月06日 09:18（北京时间）
-#   BanAD源：2026年10月17日 03:53（北京时间）
-#   Advertising源：2026年10月16日 04:18（北京时间）
-# 规则总数量：24532
+#   BanAD源：2026年10月18日 03:14（北京时间）
+#   Advertising源：2026年10月17日 03:55（北京时间）
+# 规则总数量：24533
 
 # === DOMAIN-SUFFIX 规则 ===
 DOMAIN-SUFFIX,0.101tubeporn.com
@@ -2670,6 +2670,7 @@ DOMAIN-SUFFIX,api.share.mob.com
 DOMAIN-SUFFIX,api.shinybirdwhispered.com
 DOMAIN-SUFFIX,api.sleepingrockhappy.com
 DOMAIN-SUFFIX,api.smartadv.ru
+DOMAIN-SUFFIX,api.statsig.com
 DOMAIN-SUFFIX,api.subiz.net
 DOMAIN-SUFFIX,api.subiz.xyz
 DOMAIN-SUFFIX,api.taboola.sve.cc
