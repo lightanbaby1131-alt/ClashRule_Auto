@@ -1,6 +1,6 @@
 # 内容：LocalAreaNetwork 全球直连规则（自动合并 + 去重）
-# 总数量：129 条
-# 更新时间（北京时间）：2026年10月19日 06:38
+# 总数量：131 条
+# 更新时间（北京时间）：2026年10月20日 07:58
 
 DOMAIN-SUFFIX,1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
 DOMAIN-SUFFIX,10.in-addr.arpa
@@ -113,6 +113,8 @@ DOMAIN-SUFFIX,local.adguard.org
 DOMAIN-SUFFIX,localhost
 DOMAIN-SUFFIX,localhost.ptlogin2.qq.com
 DOMAIN-SUFFIX,localhost.sec.qq.com
+DOMAIN-SUFFIX,localhost.weixin.qq.com
+DOMAIN-SUFFIX,localhost.work.weixin.qq.com
 DOMAIN-SUFFIX,miwifi.com
 DOMAIN-SUFFIX,my.router
 DOMAIN-SUFFIX,oasisauth.h3c.com
